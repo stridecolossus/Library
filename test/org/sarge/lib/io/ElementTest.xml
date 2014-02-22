@@ -1,0 +1,13 @@
+<root integer="42" long="1234567890" float="3.142" boolean="true" enum="PUBLIC">
+	<child>
+		one
+	</child>
+	
+	<child>
+		two
+	</child>
+	
+	<other>
+		<single />
+	</other>
+</root>
