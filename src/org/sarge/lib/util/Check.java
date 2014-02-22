@@ -62,7 +62,6 @@ public class Check {
 	/**
 	 * Tests whether the given array is empty.
 	 * @param array	Array to test
-	 * @param msg	Reason
 	 * @param <T> Type
 	 * @throws IllegalArgumentException if the given array is empty
 	 */
