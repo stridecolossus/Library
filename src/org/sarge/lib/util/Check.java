@@ -18,13 +18,11 @@ public class Check {
 	 * @throws IllegalArgumentException if the given object is <tt>null</tt>
 	 */
 	public static void notNull( Object obj, String msg ) throws IllegalArgumentException {
-		if( obj == null ) {
-			throw new IllegalArgumentException( msg );
-		}
+		if( obj == null ) throw new IllegalArgumentException( msg );
 	}
 
 	public static void notNull( Object obj ) throws IllegalArgumentException {
-		 notNull( obj, "Cannot be null" );
+		notNull( obj, "Cannot be null" );
 	}
 
 	/**
@@ -45,8 +43,8 @@ public class Check {
 
 	/**
 	 * Tests whether the given collection is empty.
-	 * @param c		Collection to test
-	 * @param msg	Reason
+	 * @param c Collection to test
+	 * @param msg Reason
 	 * @throws IllegalArgumentException if the given collection is empty
 	 */
 	public static void notEmpty( Collection<?> c, String msg ) throws IllegalArgumentException {
@@ -61,7 +59,7 @@ public class Check {
 
 	/**
 	 * Tests whether the given array is empty.
-	 * @param array	Array to test
+	 * @param array Array to test
 	 * @param <T> Type
 	 * @throws IllegalArgumentException if the given array is empty
 	 */
@@ -90,10 +88,11 @@ public class Check {
 
 	/**
 	 * Tests whether the given value is within the specified range.
-	 * @param value		Value to test
-	 * @param min		Minimum
-	 * @param max		Maximum
-	 * @throws IllegalArgumentException if the value is outside of the specified range
+	 * @param value Value to test
+	 * @param min Minimum
+	 * @param max Maximum
+	 * @throws IllegalArgumentException if the value is outside of the specified
+	 *             range
 	 */
 	public static void range( float value, float min, float max ) throws IllegalArgumentException {
 		if( ( value < min ) || ( value > max ) ) {
