@@ -7,6 +7,8 @@ import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -14,6 +16,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ConverterAdapter;
 import org.sarge.lib.util.Util;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -26,7 +29,7 @@ import org.xml.sax.InputSource;
  * <p>
  * @author Sarge
  */
-public class DocumentElement extends ConverterAdapter {
+public class DocumentElement implements ConverterAdapter {
 	private static final DocumentBuilder builder;
 
 	static {
@@ -41,7 +44,7 @@ public class DocumentElement extends ConverterAdapter {
 	/**
 	 * XML exception.
 	 */
-	public static class DocumentException extends Exception {
+	public static class DocumentException extends RuntimeException {
 		/**
 		 * Constructor.
 		 * @param msg	Reason
@@ -57,7 +60,20 @@ public class DocumentElement extends ConverterAdapter {
 		 * @param e		Element
 		 */
 		public DocumentException( String msg, DocumentElement e ) {
-			super( msg + " " + e.getPath().toString() );
+			super( msg + " at " + toPath( e ) );
+		}
+
+		/**
+		 * Constructor.
+		 * @param msg	Reason
+		 * @param e		Element
+		 */
+		public DocumentException( Exception cause, DocumentElement e ) {
+			super( cause.getMessage() + " at " + toPath( e ), cause );
+		}
+		
+		private static String toPath( DocumentElement e ) {
+			return e.getPath().stream().map( DocumentElement::getName ).collect( Collectors.joining( "/" ) );
 		}
 	}
 
@@ -104,7 +120,7 @@ public class DocumentElement extends ConverterAdapter {
 	public String getName() {
 		return element.getNodeName();
 	}
-
+	
 	/**
 	 * @return Element text content
 	 */
@@ -117,6 +133,15 @@ public class DocumentElement extends ConverterAdapter {
 	 */
 	public DocumentElement getParent() {
 		return parent;
+	}
+	
+	/**
+	 * Convenience method to lookup an enum constant matching the name of this element.
+	 * @param clazz Enum class
+	 * @return Enum constant
+	 */
+	public <E extends Enum<E>> E getEnum( Class<E> clazz ) {
+		return Util.getEnumConstant( getName(), clazz );
 	}
 
 	/**
@@ -134,27 +159,27 @@ public class DocumentElement extends ConverterAdapter {
 	}
 
 	/**
-	 * Retrieves a child element.
+	 * Retrieves an optional child element.
 	 * @param name			Element name
 	 * @param mandatory		Whether child element is mandatory
-	 * @return Specified child element or <tt>null</tt> if not found
+	 * @return Specified child element
 	 * @throws DocumentException if the element is mandatory but not present
 	 */
-	public DocumentElement getChild( String name, boolean mandatory ) throws DocumentException {
+	public Optional<DocumentElement> getChild( String name, boolean mandatory ) throws DocumentException {
 		for( DocumentElement e : getChildren() ) {
-			if( e.getName().equals( name ) ) return e;
+			if( e.getName().equals( name ) ) return Optional.of( e );
 		}
 
 		if( mandatory ) {
 			throw new DocumentException( "Expected child element: " + name, this );
 		}
 		else {
-			return null;
+			return Optional.empty();
 		}
 	}
 
 	public DocumentElement getChild( String name ) throws DocumentException {
-		return getChild( name, true );
+		return getChild( name, true ).get();
 	}
 
 	/**
@@ -245,10 +270,16 @@ public class DocumentElement extends ConverterAdapter {
 	}
 
 	@Override
-	protected String getValue( String name ) {
-		return element.getAttribute( name );
+	public Optional<String> getValue( String name ) {
+		final Attr attr = element.getAttributeNode( name );
+		if( attr == null ) {
+			return Optional.empty();
+		}
+		else {
+			return Optional.of( attr.getValue() );
+		}
 	}
-
+	
 	@Override
 	public String toString() {
 		return getName();

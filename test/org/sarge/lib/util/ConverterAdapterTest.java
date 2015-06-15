@@ -2,9 +2,10 @@ package org.sarge.lib.util;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Optional;
+
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.lib.util.ConverterAdapter;
 
 public class ConverterAdapterTest {
 	private ConverterAdapter adapter;
@@ -13,12 +14,12 @@ public class ConverterAdapterTest {
 	public void before() {
 		adapter = new ConverterAdapter() {
 			@Override
-			protected String getValue( String name ) {
+			public Optional<String> getValue( String name ) {
 				if( name.equals( "integer" ) ) {
-					return "42";
+					return Optional.of( "42" );
 				}
 				else {
-					return null;
+					return Optional.empty();
 				}
 			}
 		};
@@ -26,17 +27,17 @@ public class ConverterAdapterTest {
 
 	@Test
 	public void getValue() {
-		assertEquals( new Integer( 42 ), adapter.getInteger( "integer", null ) );
+		assertEquals( new Integer( 42 ), adapter.getInteger( "integer", Optional.empty() ) );
 	}
 
 	@Test
 	public void getValueDefault() {
 		final Integer def = new Integer( 999 );
-		assertEquals( def, adapter.getInteger( "cobblers", def ) );
+		assertEquals( def, adapter.getInteger( "cobblers", Optional.of( def ) ) );
 	}
 
 	@Test( expected = NumberFormatException.class )
 	public void getValueMandatory() {
-		adapter.getInteger( "cobblers", null );
+		adapter.getInteger( "cobblers", Optional.empty() );
 	}
 }

@@ -2,6 +2,7 @@ package org.sarge.lib.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Defines a generic data-source.
@@ -9,10 +10,18 @@ import java.io.InputStream;
  */
 public interface DataSource {
 	/**
-	 * Opens a data-source with the given path.
+	 * Opens this data-source for reading.
 	 * @param path Path
 	 * @return Input-stream
 	 * @throws IOException if the data-source cannot be opened
 	 */
-	InputStream open( String path ) throws IOException;
+	InputStream getInputStream( String path ) throws IOException;
+	
+	/**
+	 * Opens this data-source for writing.
+	 * @param path Path
+	 * @return Output-stream
+	 * @throws IOException if the data-source cannot be opened
+	 */
+	OutputStream getOutputStream( String path ) throws IOException;
 }

@@ -2,6 +2,7 @@ package org.sarge.lib.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.sarge.lib.util.Check;
 
@@ -9,7 +10,7 @@ import org.sarge.lib.util.Check;
  * Data-source using a specified class-path.
  * @author Sarge
  */
-public class ClasspathDataSource implements DataSource {
+public final class ClasspathDataSource implements DataSource {
 	private final Class<?> clazz;
 	
 	/**
@@ -22,10 +23,15 @@ public class ClasspathDataSource implements DataSource {
 	}
 
 	@Override
-	public InputStream open( String path ) throws IOException {
+	public InputStream getInputStream( String path ) throws IOException {
 		final InputStream is = clazz.getResourceAsStream( path );
 		if( is == null ) throw new IOException( "Class-path resource not found: " + path );
 		return is;
+	}
+	
+	@Override
+	public OutputStream getOutputStream( String path ) throws IOException {
+		throw new UnsupportedOperationException( "Cannot write to a class-path data-source" );
 	}
 	
 	@Override

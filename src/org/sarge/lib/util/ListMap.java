@@ -58,7 +58,7 @@ public class ListMap<K, V> extends AbstractMap<K, List<V>> {
 	 * @param value		Value to remove
 	 * @throws IllegalArgumentException if the list does not exist or the value is not present in the map
 	 */
-	public void remove( K key, V value ) {
+	public void removeElement( K key, V value ) {
 		// Lookup list
 		final List<V> list = map.get( key );
 		if( list == null ) throw new IllegalArgumentException( "List not found: " + key );
@@ -66,5 +66,10 @@ public class ListMap<K, V> extends AbstractMap<K, List<V>> {
 		// Remove value from list
 		final boolean removed = list.remove( value );
 		if( !removed ) throw new IllegalArgumentException( "Value not present: key=" + key + " value=" + value );
+	}
+	
+	@Override
+	public void clear() {
+		map.clear();
 	}
 }

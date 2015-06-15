@@ -5,7 +5,8 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 public class ToStringTest {
-	static class Thing {
+	@SuppressWarnings("unused")
+	private static class Data {
 		public static final int ignored = 42;
 		int num = 42;
 		String str = "string";
@@ -14,7 +15,7 @@ public class ToStringTest {
 
 	@Test
 	public void reflection() {
-		final String result = ToString.toString( new Thing() );
+		final String result = ToString.toString( new Data() );
 		assertEquals( "Thing[num=42,str=\"string\",empty=null]", result );
 	}
 

@@ -2,13 +2,14 @@ package org.sarge.lib.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
  * Immutable configuration settings based on a properties file.
  * @author Sarge
  */
-public class Config extends ConverterAdapter {
+public class Config implements ConverterAdapter {
 	private final Properties cfg;
 
 	/**
@@ -30,9 +31,9 @@ public class Config extends ConverterAdapter {
 		cfg = new Properties();
 		cfg.load( is );
 	}
-
+	
 	@Override
-	protected String getValue( String name ) {
-		return cfg.getProperty( name );
+	public Optional<String> getValue( String name ) {
+		return Optional.of( cfg.getProperty( name ) );
 	}
 }

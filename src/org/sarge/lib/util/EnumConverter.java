@@ -19,10 +19,6 @@ public class EnumConverter<E extends Enum<E>> implements Converter<E> {
 	
 	@Override
 	public E convert( String str ) throws NumberFormatException {
-		for( E e : clazz.getEnumConstants() ) {
-			if( e.name().equals( str ) ) return e;
-		}
-		
-		throw new NumberFormatException( "Unknown enum constant: " + str );
+		return Util.getEnumConstant( str, clazz );
 	}
 }

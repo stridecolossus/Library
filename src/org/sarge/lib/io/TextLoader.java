@@ -1,11 +1,14 @@
 package org.sarge.lib.io;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.StringJoiner;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
@@ -15,35 +18,23 @@ import org.sarge.lib.util.ToString;
  * @author Sarge
  */
 public class TextLoader {
-	/**
-	 * Parser for lines in a text file.
-	 */
-	public static interface LineParser {
-		/**
-		 * Parses the given line of text.
-		 * @param line 		Line of text
-		 * @param lineno	Line number
-		 */
-		void parse( String line, int lineno );
-	}
-
-	private final DataSource src;
-
-	private Collection<String> comments = new HashSet<>();
+	private Collection<String> comments = Collections.emptySet();
 	private boolean skipEmpty = true;
+	private int headers;
+	private String delimiter = "\n";
 
 	/**
-	 * Constructor.
-	 * @param src Data-source
+	 * Sets the number of header lines to skip.
+	 * @param headers Number of header lines
 	 */
-	public TextLoader( DataSource src ) {
-		Check.notNull( src );
-		this.src = src;
+	public void setHeadersLines( int headers ) {
+		Check.zeroOrMore( headers );
+		this.headers = headers;
 	}
 
 	/**
-	 * Sets the comment string.
-	 * @param comment Comment identifier or <tt>null</tt> if none (default)
+	 * Sets a single comment string.
+	 * @param comment Comment identifier
 	 */
 	public void setCommentIdentifier( String comment ) {
 		Check.notNull( comment );
@@ -67,69 +58,61 @@ public class TextLoader {
 	}
 
 	/**
-	 * Loads a text-file.
-	 * @param path file-path
-	 * @return Text-file as a string
-	 * @throws IOException if the file cannot be opened or is invalid
+	 * Sets the delimiter for separating lines.
+	 * @param delimiter Line delimiter
 	 */
-	public String load( String path ) throws IOException {
-		// Create parser to buffer file
-		final StringBuilder sb = new StringBuilder();
-		final LineParser parser = new LineParser() {
-			@Override
-			public void parse( String line, int num ) {
-				sb.append( line );
-				sb.append( '\n' );
-			}
-		};
-
-		// Load file
-		load( parser, path );
-
-		// Convert to string
-		return sb.toString();
+	public void setDelimiter( String delimiter ) {
+		Check.notNull( delimiter );
+		this.delimiter = delimiter;
 	}
 
 	/**
-	 * Loads a text-file using the given parser to load lines.
-	 * @param parser	Line parser
-	 * @param path		file-path
-	 * @throws IOException if the file cannot be opened or is invalid
+	 * Loads a text-file as a stream of lines.
+	 * @param in Input
+	 * @throws IOException if the text cannot be loaded
 	 */
-	public void load( LineParser parser, String path ) throws IOException {
-		// Load file
-		final LineNumberReader r = new LineNumberReader( new InputStreamReader( src.open( path ) ) );
-		try {
-			while( true ) {
-				// Load next line
-				String line = r.readLine();
+	public Stream<String> load( Reader in ) throws IOException {
+		final BufferedReader r = new BufferedReader( in );
+		return r.lines()
+			.skip( headers )
+			.map( String::trim )
+			.filter( str -> !( skipEmpty && str.isEmpty() ) )
+			.filter( this::isTextLine );
+	}
 
-				// Stop at EOF
-				if( line == null ) break;
+	private boolean isTextLine( String line ) {
+		return !comments.stream().filter( str -> line.startsWith( str ) ).findAny().isPresent();
+	}
 
-				// Skip empty lines
-				line = line.trim();
-				if( skipEmpty && ( line.length() == 0 ) ) continue;
-
-				// Skip comments
-				if( isComment( line ) ) continue;
-
-				// Delegate to parser
-				parser.parse( line, r.getLineNumber() );
+	/**
+	 * Loads a text-file line-by-line.
+	 * @param in		Input
+	 * @param parser	Parser for lines of the file
+	 * @throws IOException if the text cannot be loaded
+	 */
+	public void load( Reader in, Consumer<String> parser ) throws IOException {
+		try( final LineNumberReader r = new LineNumberReader( in ) ) {
+			try {
+				load( r ).forEach( line -> parser.accept( line ) );
+			}
+			catch( Exception e ) {
+				throw new IOException( e.getMessage() + " at line " + ( r.getLineNumber() + 1 ) );
 			}
 		}
-		catch( Throwable t ) {
-			throw new IOException( t.getMessage() + " at line " + r.getLineNumber(), t );
-		}
 	}
 
-	private boolean isComment( String line ) {
-		for( String str : comments ) {
-			if( line.startsWith( str ) ) return true;
-		}
-		return false;
+	/**
+	 * Loads a text-file.
+	 * @param in Input
+	 * @return Text-file as a string
+	 * @throws IOException if the text cannot be loaded
+	 */
+	public String loadFile( Reader in ) throws IOException {
+		final StringJoiner text = new StringJoiner( delimiter );
+		load( in, text::add );
+		return text.toString();
 	}
-
+	
 	@Override
 	public String toString() {
 		return ToString.toString( this );

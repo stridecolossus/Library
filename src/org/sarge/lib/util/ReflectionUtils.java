@@ -30,6 +30,9 @@ public class ReflectionUtils {
 				if( Modifier.isStatic( mods ) ) continue;
 				if( Modifier.isVolatile( mods ) ) continue;
 
+				// Skip self references
+				if( f.getName().startsWith( "this$" ) ) continue;
+
 				// Ensure field can be accessed
 				if( !f.isAccessible() ) f.setAccessible( true );
 

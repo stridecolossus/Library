@@ -5,8 +5,6 @@ import static org.junit.Assert.assertEquals;
 import javax.lang.model.element.Modifier;
 
 import org.junit.Test;
-import org.sarge.lib.util.EnumConverter;
-import org.sarge.lib.util.Converter;
 
 public class ConverterTest {
 	@Test
@@ -36,11 +34,5 @@ public class ConverterTest {
 	public void convertEnum() {
 		final EnumConverter<Modifier> converter = new EnumConverter<>( Modifier.class );
 		assertEquals( Modifier.PUBLIC, converter.convert( "PUBLIC" ) );
-	}
-
-	@Test( expected = NumberFormatException.class )
-	public void convertEnumInvalidConstant() {
-		final EnumConverter<Modifier> converter = new EnumConverter<>( Modifier.class );
-		converter.convert( "cobblers" );
 	}
 }
