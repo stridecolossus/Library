@@ -1,13 +1,16 @@
 package org.sarge.lib.io;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
+import java.util.StringJoiner;
+import java.util.function.Predicate;
 
-import org.sarge.lib.util.Check;
 import org.sarge.lib.util.ToString;
 
 /**
@@ -18,51 +21,33 @@ public class TextLoader {
 	/**
 	 * Parser for lines in a text file.
 	 */
+	@FunctionalInterface
 	public static interface LineParser {
 		/**
 		 * Parses the given line of text.
-		 * @param line 		Line of text
-		 * @param lineno	Line number
+		 * @param line Line of text
+		 * @param lineno Line number
 		 */
-		void parse( String line, int lineno );
+		void parse(String line, int lineno);
 	}
 
-	private final DataSource src;
-
-	private Collection<String> comments = new HashSet<>();
-	private boolean skipEmpty = true;
+	private final Predicate<String> commentsFilter;
+	private final boolean skipEmpty;
+	
+	/**
+	 * Convenience constructor with hash character comments.
+	 */
+	public TextLoader() {
+		this(Collections.singleton("#"), true);
+	}
 
 	/**
 	 * Constructor.
-	 * @param src Data-source
+	 * @param comments		Comment identifier(s)
+	 * @param skipEmpty		Whether to skip empty lines
 	 */
-	public TextLoader( DataSource src ) {
-		Check.notNull( src );
-		this.src = src;
-	}
-
-	/**
-	 * Sets the comment string.
-	 * @param comment Comment identifier or <tt>null</tt> if none (default)
-	 */
-	public void setCommentIdentifier( String comment ) {
-		Check.notNull( comment );
-		setCommentIdentifiers( Collections.singleton( comment ) );
-	}
-
-	/**
-	 * Sets the comment identifiers.
-	 * @param comments Comment identifiers
-	 */
-	public void setCommentIdentifiers( Collection<String> comments ) {
-		Check.notNull( comments );
-		this.comments = comments;
-	}
-
-	/**
-	 * @param skipEmpty Whether to skip empty lines (default is <tt>true</tt>)
-	 */
-	public void setSkipEmptyLines( boolean skipEmpty ) {
+	public TextLoader(Collection<String> comments, boolean skipEmpty) {
+		this.commentsFilter = line -> comments.stream().noneMatch(line::startsWith);
 		this.skipEmpty = skipEmpty;
 	}
 
@@ -70,68 +55,42 @@ public class TextLoader {
 	 * Loads a text-file.
 	 * @param path file-path
 	 * @return Text-file as a string
-	 * @throws IOException if the file cannot be opened or is invalid
+	 * @throws IOException if the data cannot be loaded
 	 */
-	public String load( String path ) throws IOException {
-		// Create parser to buffer file
-		final StringBuilder sb = new StringBuilder();
-		final LineParser parser = new LineParser() {
-			@Override
-			public void parse( String line, int num ) {
-				sb.append( line );
-				sb.append( '\n' );
-			}
-		};
-
-		// Load file
-		load( parser, path );
-
-		// Convert to string
-		return sb.toString();
+	public String load(Reader in) throws IOException {
+		final StringJoiner text = new StringJoiner("\n");
+		final LineParser parser = (line, lineno) -> text.add(line);
+		load(parser, in);
+		return text.toString();
 	}
 
 	/**
 	 * Loads a text-file using the given parser to load lines.
 	 * @param parser	Line parser
-	 * @param path		file-path
-	 * @throws IOException if the file cannot be opened or is invalid
+	 * @param in		Input stream
+	 * @throws IOException if the data cannot be loaded
 	 */
-	public void load( LineParser parser, String path ) throws IOException {
-		// Load file
-		final LineNumberReader r = new LineNumberReader( new InputStreamReader( src.open( path ) ) );
-		try {
-			while( true ) {
-				// Load next line
-				String line = r.readLine();
-
-				// Stop at EOF
-				if( line == null ) break;
-
-				// Skip empty lines
-				line = line.trim();
-				if( skipEmpty && ( line.length() == 0 ) ) continue;
-
-				// Skip comments
-				if( isComment( line ) ) continue;
-
-				// Delegate to parser
-				parser.parse( line, r.getLineNumber() );
-			}
-		}
-		catch( Throwable t ) {
-			throw new IOException( t.getMessage() + " at line " + r.getLineNumber(), t );
+	public void load(LineParser parser, Reader in) throws IOException {
+		try(final LineNumberReader r = new LineNumberReader(new BufferedReader(in))) {
+			final Predicate<String> filter = buildLineFilter();
+			r.lines().filter(filter).forEach(str -> parser.parse(str, r.getLineNumber()));
 		}
 	}
-
-	private boolean isComment( String line ) {
-		for( String str : comments ) {
-			if( line.startsWith( str ) ) return true;
+	
+	/**
+	 * @return Line filter for this loader
+	 */
+	private Predicate<String> buildLineFilter() {
+		final List<Predicate<String>> list = new ArrayList<>();
+		list.add(commentsFilter);
+		if(skipEmpty) {
+			list.add(line -> !line.isEmpty());
 		}
-		return false;
+		return list.stream().reduce(str -> true, Predicate::and); // TODO - utility method?
 	}
 
 	@Override
 	public String toString() {
-		return ToString.toString( this );
+		return ToString.toString(this);
 	}
 }
