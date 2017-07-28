@@ -77,7 +77,7 @@ public class ElementLoader {
 			builder.attribute(node.getNodeName(), node.getNodeValue());
 		}
 		
-		// Load child nodes
+		// Load child nodes and element text
 		final List<Node> children = new ArrayList<>();
 		final NodeList nodes = xml.getChildNodes();
 		for(int n = 0; n < nodes.getLength(); ++n) {

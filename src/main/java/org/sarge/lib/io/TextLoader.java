@@ -12,7 +12,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.sarge.lib.util.Check;
-import org.sarge.lib.util.Util;
+import org.sarge.lib.util.StreamUtil;
 
 /**
  * Text loader utility providing helper functionality to skip lines and comments.
@@ -43,7 +43,7 @@ public class TextLoader {
 		final List<Predicate<String>> filter = new ArrayList<>();
 		if(skipEmpty) filter.add(String::isEmpty);
 		filter.add(this::isComment);
-		return Util.compoundPredicate(filter, Predicate::or, true).negate();
+		return StreamUtil.compoundPredicate(filter, Predicate::or, true).negate();
 	}
 
 	/**

@@ -7,62 +7,49 @@ import org.junit.Test;
 
 public class ConverterAdapterTest {
 	private ConverterAdapter adapter;
-	private String value;
 	
 	@Before
 	public void before() {
-		adapter = new ConverterAdapter() {
-			@Override
-			protected String getValue(String name) {
-				return value;
-			}
-		};
-		value = null;
+		adapter = new ConverterAdapter(MapBuilder.build("integer", 42, "boolean", true, "float", 1.23f));
 	}
 	
 	@Test
 	public void getValue() {
-		value = "string";
-		assertEquals(value, adapter.getString("value", null));
+	    assertEquals("42", adapter.getValue("integer", null, Converter.STRING));
 	}
 	
 	@Test
 	public void getValueDefault() {
-		assertEquals("def", adapter.getString("value", "def"));
+        assertEquals("def", adapter.getValue("cobblers", "def", Converter.STRING));
 	}
 	
 	@Test(expected = NumberFormatException.class)
 	public void getValueMissing() {
-		adapter.getString(value, null);
+        adapter.getValue("cobblers", null, Converter.STRING);
 	}
 	
 	@Test
-	public void getString() {
-		value = "value";
-		assertEquals(value, adapter.getString("value", null));
+	public void toStringValue() {
+		assertEquals("42", adapter.toString("integer", null));
 	}
 	
 	@Test
-	public void getInteger() {
-		value = "42";
-		assertEquals(42, adapter.getInteger("value", null));
+	public void toInteger() {
+		assertEquals(42, adapter.toInteger("integer", null));
 	}
 	
 	@Test
-	public void getLong() {
-		value = "42";
-		assertEquals(42L, adapter.getLong("value", null));
+	public void toLong() {
+		assertEquals(42L, adapter.toLong("integer", null));
 	}
 	
 	@Test
-	public void getFloat() {
-		value = "1.23";
-		assertEquals(1.23f, adapter.getFloat("value", null), 0.0001f);
+	public void toFloat() {
+		assertEquals(1.23f, adapter.toFloat("float", null), 0.0001f);
 	}
 	
 	@Test
-	public void getBoolean() {
-		value = "true";
-		assertEquals(true, adapter.getBoolean("value", null));
+	public void toBoolean() {
+		assertEquals(true, adapter.toBoolean("boolean", null));
 	}
 }

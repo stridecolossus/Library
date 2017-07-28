@@ -5,19 +5,19 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.sarge.lib.util.StringUtil;
 
 public class ElementLoaderTest {
 	private ElementLoader loader;
-	
+
 	@Before
 	public void before() {
 		loader = new ElementLoader();
 	}
-	
+
 	@Test
 	public void load() throws IOException {
 		// Create an XML document
@@ -27,31 +27,29 @@ public class ElementLoaderTest {
 					"text" +
 				"</child>" +
 			"</parent>";
-		
+
 		// Load XML
 		final Element parent = loader.load(new StringReader(xml));
 		assertNotNull(parent);
-		
+
 		// Check parent
-		assertEquals("parent", parent.getName());
-		assertEquals(null, parent.getParent());
-		assertEquals(Optional.empty(), parent.getText());
-		
+		assertEquals("parent", parent.name());
+		assertEquals(null, parent.parent());
+		assertEquals(StringUtil.EMPTY_STRING, parent.text());
+
 		// Check attributes
-		assertNotNull(parent.getAttributes());
-		assertEquals(1, parent.getAttributes().size());
-		assertEquals("value", parent.getAttributes().get("name"));
+		assertEquals("value", parent.attributes().toString("name", null));
 
 		// Check children
-		assertNotNull(parent.getChildren());
-		assertEquals(1, parent.getChildren().count());
+		assertNotNull(parent.children());
+		assertEquals(1, parent.children().count());
 
 		// Check child
-		final Element child = parent.getChildren().iterator().next();
-		assertEquals("child", child.getName());
-		assertEquals(parent, child.getParent());
-		assertEquals(Optional.of("text"), child.getText());
-		assertNotNull(child.getChildren());
-		assertEquals(0, child.getChildren().count());
+		final Element child = parent.children().iterator().next();
+		assertEquals("child", child.name());
+		assertEquals(parent, child.parent());
+		assertEquals("text", child.text());
+		assertNotNull(child.children());
+		assertEquals(0, child.children().count());
 	}
 }

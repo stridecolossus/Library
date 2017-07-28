@@ -4,85 +4,89 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.Collections;
+import java.util.Optional;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.sarge.lib.util.Converter;
-import org.sarge.lib.xml.Element.ElementException;
+import org.sarge.lib.util.AbstractTest;
 
-public class ElementTest {
+public class ElementTest extends AbstractTest {
 	private Element parent, child;
-	
-	@Rule
-	public ExpectedException exception = ExpectedException.none();
 
 	@Before
 	public void before() {
-		parent = new Element("parent", Collections.singletonMap("key", "value"), "text", null);
-		child = new Element("child", Collections.emptyMap(), "", parent);
+		parent = new Element.Builder("parent").attribute("key", "value").text("text").build();
+		child = new Element.Builder("child").parent(parent).build();
 	}
 	
 	@Test
 	public void constructor() {
-		assertEquals("parent", parent.getName());
-		assertNotNull(parent.getAttributes());
-		assertEquals("text", parent.getText());
+		assertEquals("parent", parent.name());
+		assertNotNull(parent.attributes());
+		assertEquals("text", parent.text());
 	}
 	
 	@Test
-	public void getParent() {
-		assertEquals(null, parent.getParent());
-		assertEquals(parent, child.getParent());
+	public void parent() {
+		assertEquals(null, parent.parent());
+		assertEquals(parent, child.parent());
 	}
 	
 	@Test
-	public void getChildren() {
-		assertNotNull(parent.getChildren());
-		assertEquals(1, parent.getChildren().count());
+	public void children() {
+		assertNotNull(parent.children());
+		assertArrayEquals(new Element[]{child}, parent.children().toArray());
 	}
 	
 	@Test
-	public void getChild() {
-		assertEquals(child, parent.getChild());
+	public void child() {
+		assertEquals(child, parent.child());
 	}
 
 	@Test(expected = ElementException.class)
-	public void getChildMissing() {
-		child.getChild();
+	public void childMissing() {
+		child.child();
 	}
 	
 	@Test
-	public void getChildByName() {
-		assertEquals(child, parent.getChild("child"));
+	public void childByName() {
+		assertEquals(child, parent.child("child"));
 	}
 
 	@Test(expected = ElementException.class)
-	public void getChildByNameMissing() {
-		parent.getChild("cobblers");
+	public void childByNameMissing() {
+		parent.child("cobblers");
+	}
+	
+    @Test
+    public void optionalChild() {
+        assertEquals(Optional.of(child), parent.optionalChild());
+    }
+
+    @Test
+    public void optionalChildEmpty() {
+        assertEquals(Optional.empty(), child.optionalChild());
+    }
+    
+    @Test
+    public void optionalNamedChild() {
+        assertEquals(Optional.of(child), parent.optionalChild("child"));
+    }
+
+    @Test
+    public void optionalNamedChildEmpty() {
+        assertEquals(Optional.empty(), parent.optionalChild("none"));
+    }
+    
+	@Test
+	public void attributes() {
+		assertEquals("value", parent.attributes().toString("key", null));
 	}
 	
 	@Test
-	public void getAttribute() {
-		assertEquals("value", parent.getAttribute("key", null, Converter.STRING));
-	}
-	
-	@Test
-	public void getAttributeMissing() {
-		exception.expect(ElementException.class);
-		exception.expectMessage("Missing mandatory attribute: doh at /parent");
-		parent.getAttribute("doh", null, Converter.STRING);
-	}
-	
-	@SuppressWarnings("unused")
-	@Test
-	public void getPath() {
-		new Element("middle", Collections.emptyMap(), "", parent);
-		final Element other = new Element("middle", Collections.emptyMap(), "", parent);
-		final Element leaf = new Element("leaf", Collections.emptyMap(), "", other);
-		assertArrayEquals(new Element[]{parent, child}, child.getPath().toArray());
-		assertArrayEquals(new Element[]{parent, other, leaf}, leaf.getPath().toArray());
+	public void path() {
+	    final Element leaf = new Element.Builder("leaf").parent(child).build();
+		assertArrayEquals(new Element[]{parent, child}, child.path().toArray());
+		assertArrayEquals(new Element[]{parent, child, leaf}, leaf.path().toArray());
 	}
 }

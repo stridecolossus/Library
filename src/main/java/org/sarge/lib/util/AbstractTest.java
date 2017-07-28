@@ -12,16 +12,16 @@ public abstract class AbstractTest {
 	 * Expected exception.
 	 */
 	@Rule
-	public static final ExpectedException EXPECTED = ExpectedException.none();
+	public final ExpectedException EXPECTED = ExpectedException.none();
 
 	/**
 	 * Registers an expected exception with the given message.
 	 * @param type		Exception class
 	 * @param message	Expected message or <tt>null</tt> to ignore the exception text
 	 */
-	protected static void expect(Class<? extends Throwable> type, String message) {
+	protected void expect(Class<? extends Throwable> type, String message) {
 		EXPECTED.expect(type);
-		if(!Util.isEmpty(message)) {
+		if(message != null) {
 			EXPECTED.expectMessage(message);
 		}
 	}
@@ -31,7 +31,7 @@ public abstract class AbstractTest {
 	 * @param type		Exception class
 	 * @param message	Expected message
 	 */
-	protected static void expect(Class<? extends Throwable> type) {
+	protected void expect(Class<? extends Throwable> type) {
 		expect(type, null);
 	}
 }

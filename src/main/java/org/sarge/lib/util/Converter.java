@@ -15,14 +15,14 @@ public interface Converter<T> {
 	 * Convert the given string to this data-type.
 	 * @param str String to convert
 	 * @return Converted data
-	 * @throws NumberFormatException if the value is not valid
+	 * @throws NumberFormatException if the value cannot be converted
 	 */
 	T convert(String str);
 	
 	/**
 	 * Converts to an string (i.e. does nothing).
 	 */
-	Converter<String> STRING = str -> str;
+    Converter<String> STRING = str -> str;
 
 	/**
 	 * Converts to an integer.
