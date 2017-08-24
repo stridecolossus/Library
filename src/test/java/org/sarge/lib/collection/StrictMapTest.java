@@ -1,10 +1,10 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.lib.util.StrictMap;
+import org.sarge.lib.collection.StrictMap;
 
 public class StrictMapTest {
 	private Map<String, Object> map;

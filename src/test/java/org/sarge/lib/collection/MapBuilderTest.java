@@ -1,4 +1,4 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import java.util.Map;
 
 import org.junit.Test;
+import org.sarge.lib.collection.MapBuilder;
 
 public class MapBuilderTest {
 	@Test

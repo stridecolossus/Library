@@ -1,9 +1,12 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+
+import org.sarge.lib.object.ToString;
+import org.sarge.lib.util.Check;
 
 /**
  * Infinite looping iterator over a collection.

@@ -1,11 +1,11 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.lib.util.ListMap;
+import org.sarge.lib.collection.ListMap;
 
 public class ListMapTest {
 	private static final String key = "key";

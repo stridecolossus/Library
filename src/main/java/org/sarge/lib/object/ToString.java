@@ -1,17 +1,14 @@
-package org.sarge.lib.util;
+package org.sarge.lib.object;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import org.sarge.lib.util.Check;
 
 /**
  * To-string builder.
  * @author Sarge
  */
 public class ToString {
-	private static final Logger LOG = Logger.getLogger(ToString.class.getName());
-
 	private static final char QUOTE = '\"';
 
 	/**
@@ -20,26 +17,22 @@ public class ToString {
 	 * @return To-string
 	 */
 	public static String toString(Object obj) {
-		// Create builder
 		final ToString ts = new ToString(obj);
-
-		// Add field values
-		try {
-			for(Field field : ReflectionUtils.getMemberFields(obj.getClass())) {
-				final Object value = field.get(obj);
-				if(value == obj) {
-					ts.append(field.getName(), "SELF");
-				}
-				else {
-					ts.append(field.getName(), value);
-				}
+		ReflectionUtils.getMembers(obj.getClass()).forEach(field -> {
+			final Object value = ReflectionUtils.getValue(field, obj);
+			final String str;
+			if(value == obj) {
+				str = "SELF";
 			}
-		}
-		catch(IllegalAccessException e) {
-			LOG.log(Level.SEVERE, "Error accessing field: " + obj.getClass(), e);
-		}
-
-		// Convert to string
+			else
+			if(value == null) {
+				str = "NULL";
+			}
+			else {
+				str = value.toString();
+			}
+			ts.append(field.getName(), str);
+		});
 		return ts.toString();
 	}
 

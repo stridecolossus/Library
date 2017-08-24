@@ -1,9 +1,11 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import org.sarge.lib.util.Check;
 
 /**
  * Strict implementation that prevents <tt>null</tt> or duplicate keys.

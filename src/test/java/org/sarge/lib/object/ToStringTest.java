@@ -1,9 +1,10 @@
-package org.sarge.lib.util;
+package org.sarge.lib.object;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.sarge.lib.object.ToString;
 
 public class ToStringTest {
 	@SuppressWarnings("unused")

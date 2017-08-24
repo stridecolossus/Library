@@ -1,9 +1,9 @@
-package org.sarge.lib.util;
+package org.sarge.lib.object;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-import org.sarge.lib.util.HashCodeBuilder;
+import org.sarge.lib.object.HashCodeBuilder;
 
 public class HashCodeBuilderTest {
 	@Test

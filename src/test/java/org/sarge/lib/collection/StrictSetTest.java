@@ -1,9 +1,9 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.lib.util.StrictSet;
+import org.sarge.lib.collection.StrictSet;
 
 public class StrictSetTest {
 	private Set<String> set;

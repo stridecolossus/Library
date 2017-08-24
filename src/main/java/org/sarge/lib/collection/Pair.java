@@ -1,4 +1,4 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import java.util.Map;
 import java.util.function.BiFunction;

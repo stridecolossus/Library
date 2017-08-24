@@ -1,8 +1,6 @@
 package org.sarge.lib.util;
 
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.function.Supplier;
 
 /**
@@ -52,24 +50,5 @@ public final class Util {
 		} catch(InterruptedException e) {
 		    // Ignored
 		}
-	}
-	
-	/**
-	 * Converts an enumeration to an iterator.
-	 * @param enumeration Enumeration
-	 * @return Iterator over the given enumeration
-	 */
-	public static <T> Iterator<T> iterator(Enumeration<T> enumeration) {
-	    return new Iterator<T>() {
-	        @Override
-	        public boolean hasNext() {
-	            return enumeration.hasMoreElements();
-	        }
-	        
-	        @Override
-	        public T next() {
-	            return enumeration.nextElement();
-	        }
-        };
 	}
 }

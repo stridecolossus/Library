@@ -2,15 +2,13 @@ package org.sarge.lib.util;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Adapter for a map with {@link Converter} functionality for values.
  * @author Sarge
  * TODO
  * - should be called MapConverter or some-such?
- * - need implements Map? or expose underlying table? probably not
- * - return types should be wrappers?
- * - over-loads for mandatory getters?
  */
 public class ConverterAdapter {
     private final Map<?, ?> values;
@@ -22,6 +20,15 @@ public class ConverterAdapter {
     public ConverterAdapter(Map<?, ?> values) {
         this.values = new HashMap<>(values);
     }
+
+    /**
+     * Looks up an optional value.
+     * @param key Key
+     * @return Value
+     */
+    public <T> Optional<T> getOptional(Object key, Converter<T> converter) {
+    	return Optional.ofNullable(values.get(key)).map(Object::toString).map(converter::convert);
+    }
     
 	/**
 	 * Retrieves and converts a value.
@@ -31,7 +38,7 @@ public class ConverterAdapter {
 	 * @return Converted value
 	 * @throws NumberFormatException if the value cannot be converted, or the key is not present and no default was supplied (i.e. is mandatory)
 	 */
-	public <T> T getValue(String key, T def, Converter<T> converter) {
+	public <T> T toValue(Object key, T def, Converter<T> converter) {
 		final Object value = values.get(key);
 		if(value == null) {
 			if(def == null) {
@@ -52,8 +59,12 @@ public class ConverterAdapter {
 	 * @param def		Optional default value
 	 * @return String
 	 */
-	public String toString(String name, String def) {
-		return getValue(name, def, Converter.STRING);
+	public String toString(Object name, String def) {
+		return toValue(name, def, Converter.STRING);
+	}
+
+	public String toString(Object name) {
+		return toValue(name, null, Converter.STRING);
 	}
 
 	/**
@@ -62,8 +73,12 @@ public class ConverterAdapter {
 	 * @param def		Optional default value
 	 * @return Integer
 	 */
-	public int toInteger(String name, Integer def) {
-		return getValue(name, def, Converter.INTEGER);
+	public Integer toInteger(Object name, Integer def) {
+		return toValue(name, def, Converter.INTEGER);
+	}
+
+	public Integer toInteger(Object name) {
+		return toValue(name, null, Converter.INTEGER);
 	}
 
 	/**
@@ -72,8 +87,12 @@ public class ConverterAdapter {
 	 * @param def		Optional default value
 	 * @return Long
 	 */
-	public long toLong(String name, Long def) {
-		return getValue(name, def, Converter.LONG);
+	public Long toLong(Object name, Long def) {
+		return toValue(name, def, Converter.LONG);
+	}
+
+	public Long toLong(Object name) {
+		return toValue(name, null, Converter.LONG);
 	}
 
 	/**
@@ -82,8 +101,12 @@ public class ConverterAdapter {
 	 * @param def		Optional default value
 	 * @return Floating-point value
 	 */
-	public float toFloat(String name, Float def) {
-		return getValue(name, def, Converter.FLOAT);
+	public Float toFloat(Object name, Float def) {
+		return toValue(name, def, Converter.FLOAT);
+	}
+
+	public Float toFloat(Object name) {
+		return toValue(name, null, Converter.FLOAT);
 	}
 
 	/**
@@ -92,8 +115,12 @@ public class ConverterAdapter {
 	 * @param def		Optional default value
 	 * @return Boolean
 	 */
-	public boolean toBoolean(String name, Boolean def) {
-		return getValue(name, def, Converter.BOOLEAN);
+	public Boolean toBoolean(Object name, Boolean def) {
+		return toValue(name, def, Converter.BOOLEAN);
+	}
+
+	public Boolean toBoolean(Object name) {
+		return toValue(name, null, Converter.BOOLEAN);
 	}
 	
 	@Override

@@ -33,6 +33,11 @@ public class StreamUtilTest {
 	}
 	
 	@Test
+	public void iterate() {
+		assertArrayEquals(new Integer[]{1, 2}, StreamUtil.iterate(1, i -> i < 3, i -> i + 1).toArray());
+	}
+	
+	@Test
 	public void findOnly() {
 		assertEquals(Optional.of(42), StreamUtil.findOnly(Stream.of(42)));
 	}

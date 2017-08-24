@@ -1,10 +1,10 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.lib.util.StrictList;
+import org.sarge.lib.collection.StrictList;
 
 public class StrictListTest {
 	private List<String> list;

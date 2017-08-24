@@ -11,9 +11,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import org.sarge.lib.collection.StrictMap;
 import org.sarge.lib.util.ConverterAdapter;
 import org.sarge.lib.util.StreamUtil;
-import org.sarge.lib.util.StrictMap;
 import org.sarge.lib.util.StringUtil;
 
 /**
@@ -163,6 +163,11 @@ public class Element {
      */
     public ElementException exception(String reason) {
         return new ElementException(this, reason);
+    }
+
+    // TODO - needed
+    public ElementException exception(Exception e) {
+        return new ElementException(this, e);
     }
 
     @Override

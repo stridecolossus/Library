@@ -1,4 +1,4 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -10,7 +10,8 @@ import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.lib.util.InverseMap.InverseHashMap;
+import org.sarge.lib.collection.InverseMap;
+import org.sarge.lib.collection.InverseMap.InverseHashMap;
 
 public class InverseMapTest {
     private InverseMap<Integer, String> map;

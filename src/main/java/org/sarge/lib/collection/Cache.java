@@ -1,4 +1,4 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import static org.sarge.lib.util.Check.notNull;
 

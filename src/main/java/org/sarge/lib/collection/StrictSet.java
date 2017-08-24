@@ -1,9 +1,11 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import java.util.AbstractSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+
+import org.sarge.lib.util.Check;
 
 /**
  * Strict set implementation that prevents <tt>null</tt> entries and duplicates.

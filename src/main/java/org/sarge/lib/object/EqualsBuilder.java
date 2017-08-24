@@ -1,15 +1,17 @@
-package org.sarge.lib.util;
+package org.sarge.lib.object;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.List;
 
 /**
  * Utilities for generating <tt>equals</tt> comparators using reflection.
  * @author Sarge
  */
-public class EqualsBuilder {
-
+public final class EqualsBuilder {
+	private EqualsBuilder() {
+		// Utility class
+	}
+	
 	public static boolean isEqual(float a, float b) {
 		return isEqual(a, b, 0.0001f);
 	}
@@ -37,23 +39,12 @@ public class EqualsBuilder {
 		if(!clazz.isAssignableFrom(other) && !other.isAssignableFrom(clazz)) return false;
 
 		// Compare fields
-		final List<Field> fields = ReflectionUtils.getMemberFields(clazz);
-		try {
-			for(Field f : fields) {
-				if(!equals(f, thisObject, thatObject)) return false;
-			}
-		}
-		catch(IllegalAccessException e) {
-			throw new RuntimeException("Error acessing field", e);
-		}
-
-		// Objects are equal
-		return true;
+		return ReflectionUtils.getMembers(clazz).allMatch(field -> equals(field, thisObject, thatObject));
 	}
 	
-	private static boolean equals(Field field, Object thisObject, Object thatObject) throws IllegalAccessException {
-		final Object thisValue = field.get(thisObject);
-		final Object thatValue = field.get(thatObject);
+	private static boolean equals(Field field, Object thisObject, Object thatObject) {
+		final Object thisValue = ReflectionUtils.getValue(field, thisObject);
+		final Object thatValue = ReflectionUtils.getValue(field, thatObject);
 
 		if(thisValue == null) {
 			return thatValue == null;

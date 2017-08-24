@@ -1,7 +1,9 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.sarge.lib.util.Check;
 
 /**
  * Strict implementation that prevents <tt>null</tt> entries and duplicates.

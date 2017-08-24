@@ -12,7 +12,7 @@ public class ElementException extends RuntimeException {
      * Maps elements to XML name.
      * @return Element name/index
      */
-    private static final Function<Element, String> ELEMENT_NAME = element -> {
+    protected static final Function<Element, String> ELEMENT_NAME = element -> {
         final String name = element.name();
         final Element parent = element.parent();
         if((parent == null) || (parent.children().count() == 1)) {
@@ -39,6 +39,10 @@ public class ElementException extends RuntimeException {
      */
     public ElementException(Element element, String reason) {
         this(element, reason, ELEMENT_NAME);
+    }
+
+    public ElementException(Element element, Exception e) {
+        this(element, e, ELEMENT_NAME);
     }
 
     // TODO - tidy up ctors

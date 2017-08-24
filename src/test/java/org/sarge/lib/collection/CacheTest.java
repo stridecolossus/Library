@@ -1,4 +1,4 @@
-package org.sarge.lib.util;
+package org.sarge.lib.collection;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -11,8 +11,10 @@ import java.util.stream.Stream;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.lib.util.Cache.Entry;
-import org.sarge.lib.util.Cache.EvictionPolicy;
+import org.sarge.lib.collection.Cache;
+import org.sarge.lib.collection.Cache.Entry;
+import org.sarge.lib.collection.Cache.EvictionPolicy;
+import org.sarge.lib.util.Util;
 
 public class CacheTest {
     private class MockLoader implements Cache.Loader<Integer, String> {
