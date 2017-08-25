@@ -1,7 +1,5 @@
 package org.sarge.lib.util;
 
-import java.time.Duration;
-import java.time.LocalTime;
 import java.util.function.Supplier;
 
 /**
@@ -44,16 +42,6 @@ public interface Converter<T> {
 	 */
 	Converter<Boolean> BOOLEAN = Boolean::parseBoolean;
 
-	/**
-	 * Creates a duration converter.
-	 * @return Duration converter
-	 * @see LocalTime#parse(CharSequence)
-	 */
-	Converter<Duration> DURATION = str -> {
-		final LocalTime time = LocalTime.parse(str);
-		return Duration.between(LocalTime.MIN, time);
-	};
-	
 	/**
 	 * Creates a converter for the given enumeration.
 	 * @param clazz Enumeration class
