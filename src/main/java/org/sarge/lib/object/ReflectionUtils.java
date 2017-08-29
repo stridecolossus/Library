@@ -29,7 +29,7 @@ public final class ReflectionUtils {
 	 * @return Member fields
 	 */
 	public static Stream<Field> getMembers(Class<?> clazz) {
-		return StreamUtil.iterate(clazz, Objects::nonNull, Class::getSuperclass)
+		return StreamUtil.<Class<?>>iterate(clazz, Objects::nonNull, Class::getSuperclass)
 			.map(Class::getDeclaredFields)
 			.flatMap(Arrays::stream)
 			.filter(MEMBER);

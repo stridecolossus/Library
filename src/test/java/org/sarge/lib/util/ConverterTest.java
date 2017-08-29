@@ -1,9 +1,6 @@
 package org.sarge.lib.util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.time.Duration;
 
 import javax.lang.model.element.Modifier;
 
@@ -43,14 +40,5 @@ public class ConverterTest {
 	@Test(expected=NumberFormatException.class)
 	public void convertEnumerationUnknownCustom() {
 		Converter.enumeration(Modifier.class).convert("COBBLERS");
-	}
-	
-	@Test
-	public void duration() {
-		final Duration duration = Converter.DURATION.convert("01:02:03");
-		assertNotNull(duration);
-		assertEquals(1, duration.toHours());
-		assertEquals(60 + 2, duration.toMinutes());
-		assertEquals(((60 * 60) + (2 * 60) + 3) * 1000, duration.toMillis());
 	}
 }
