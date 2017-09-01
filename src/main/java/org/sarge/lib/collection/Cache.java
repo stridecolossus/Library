@@ -339,7 +339,7 @@ public class Cache<K, V> {
 
         // Check for unknown cache keys
         if(value == null) {
-            // TODO - log
+            // TODO - log, or flag if expect nulls
             return null;
         }
 
