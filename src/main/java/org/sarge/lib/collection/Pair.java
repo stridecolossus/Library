@@ -5,6 +5,9 @@ import java.util.function.BiFunction;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+import org.sarge.lib.object.EqualsBuilder;
+import org.sarge.lib.object.HashCodeBuilder;
+
 /**
  * Pair of objects.
  * @author Sarge
@@ -29,17 +32,12 @@ public class Pair<L, R> {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == null) return false;
-		if(obj == this) return true;
-		if(obj instanceof Pair) {
-			// TODO - how to ensure has same type?
-			@SuppressWarnings("unchecked")
-			final Pair<L, R> that = (Pair<L, R>) obj;
-			return this.left.equals(that.left) && this.right.equals(that.right);
-		}
-		else {
-			return false;
-		}
+		return EqualsBuilder.equals(this, obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return HashCodeBuilder.hashCode(this);
 	}
 
 	@Override

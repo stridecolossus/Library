@@ -42,6 +42,12 @@ public class ElementTest extends AbstractTest {
 	public void child() {
 		assertEquals(child, parent.child());
 	}
+	
+	@Test
+	public void simpleChild() {
+		parent = new Element.Builder("parent").child("child").build();
+		parent.child("child");
+	}
 
 	@Test(expected = ElementException.class)
 	public void childMissing() {

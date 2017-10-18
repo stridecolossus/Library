@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.sarge.lib.collection.StrictMap;
+import org.sarge.lib.object.EqualsBuilder;
 import org.sarge.lib.util.ConverterAdapter;
 import org.sarge.lib.util.StreamUtil;
 import org.sarge.lib.util.StringUtil;
@@ -50,6 +51,15 @@ public class Element {
 	 */
 	public Element(String name) {
 		this(name, Collections.emptyMap(), StringUtil.EMPTY_STRING, null);
+	}
+	
+	/**
+	 * Convenience constructor for a simple element.
+	 * @param name		Element name
+	 * @param parent	Parent element
+	 */
+	public Element(String name, Element parent) {
+		this(name, Collections.emptyMap(), StringUtil.EMPTY_STRING, parent);
 	}
 	
 	/**
@@ -169,7 +179,12 @@ public class Element {
     public ElementException exception(Exception e) {
         return new ElementException(this, e);
     }
-
+    
+    @Override
+    public boolean equals(Object that) {
+    	return EqualsBuilder.equals(this, that);
+    }
+    
     @Override
 	public String toString() {
 		return name;
@@ -183,6 +198,7 @@ public class Element {
 		private final Map<String, String> attributes = new StrictMap<>();
 		private String text = StringUtil.EMPTY_STRING;
 		private Element parent;
+		private final List<String> children = new ArrayList<>();
 		
 		/**
 		 * Constructor.
@@ -219,13 +235,24 @@ public class Element {
 			this.parent = parent;
 			return this;
 		}
+		
+		/**
+		 * Adds a simple child element.
+		 * @param name Child element name
+		 */
+		public Builder child(String name) {
+			children.add(name);
+			return this;
+		}
 
 		/**
 		 * Constructs this element.
 		 * @return New element
 		 */
 		public Element build() {
-		    return new Element(name, attributes, text, parent);
+		    final Element element = new Element(name, attributes, text, parent);
+		    children.stream().forEach(child -> new Element(child, element));
+		    return element;
 		}
 	}
 }

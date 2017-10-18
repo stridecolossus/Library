@@ -3,196 +3,202 @@ package org.sarge.lib.collection;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
-import java.util.Collections;
-import java.util.stream.Stream;
+import java.util.HashMap;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.sarge.lib.collection.Cache;
 import org.sarge.lib.collection.Cache.Entry;
 import org.sarge.lib.collection.Cache.EvictionPolicy;
-import org.sarge.lib.util.Util;
+import org.sarge.lib.collection.Cache.Limit;
+import org.sarge.lib.collection.Cache.Listener;
+import org.sarge.lib.collection.Cache.Listener.Type;
+import org.sarge.lib.collection.Cache.Loader;
+import org.sarge.lib.collection.Cache.Statistics;
 
 public class CacheTest {
-    private class MockLoader implements Cache.Loader<Integer, String> {
-        private int count;
-        
-        @Override
-        public String load(Integer key) {
-            ++count;
-            switch(key) {
-                case -1:
-                    // Simulates a loading error
-                    throw new RuntimeException();
-                    
-                case -2:
-                    // Simulates an unknown key
-                    return null;
-                    
-                case -3:
-                    // Loading time
-                    Util.kip(50);
-                    return null;
-                
-                default:
-                    // Mock loader
-                    return String.valueOf(key);
-            }
-        }
-    }
+	private Cache<Integer, String> cache;
+	private Loader<Integer, String> loader;
+	private Statistics stats;
 
-    private Cache<Integer, String> cache;
-    private MockLoader loader;
-    private Cache.EvictionPolicy policy;
-    private Cache.Statistics stats;
-    
-    @Before
-    public void before() {
-        // Create an eviction policy that limits size to one entry
-        policy = new EvictionPolicy() {            
-            @Override
-            public boolean isFull(Entry<?> entry, Cache<?, ?> cache) {
-                return cache.size() > 0;
-            }
-            
-            @Override
-            public Stream<Object> getEvictionCandidates() {
-                return cache.keySet().stream().map(k -> k);
-            }
-        };
-        
-        // Create cache
-        loader = new MockLoader();
-        cache = new Cache<>(loader, policy);
-        stats = cache.statistics();
-    }
-    
-    @Test
-    public void constructor() {
-        assertEquals(0, cache.size());
-        assertNotNull(cache.keySet().size());
-        assertEquals(0, cache.keySet().size());
-    }
-    
-    @Test
-    public void stats() {
-        assertNotNull(stats);
-        assertEquals(0, stats.hitCount());
-        assertEquals(0, stats.missCount());
-        assertEquals(0, stats.errorCount());
-        assertEquals(0, stats.evictionCount());
-        assertEquals(0, stats.loadingTime());
-        assertEquals(0, stats.maxSize());
-    }
-    
-    @Test
-    public void getMiss() {
-        assertEquals("1", cache.get(1));
-        assertEquals(1, loader.count);
-        assertEquals(0, stats.hitCount());
-        assertEquals(1, stats.missCount());
-        assertEquals(0, stats.errorCount());
-        assertEquals(0, stats.evictionCount());
-        assertEquals(1, stats.maxSize());
-    }
-    
-    @Test
-    public void getHit() {
-        cache.add(1);
-        assertEquals("1", cache.get(1));
-        assertEquals(1, stats.hitCount());
-        assertEquals(0, stats.missCount());
-        assertEquals(0, stats.errorCount());
-        assertEquals(0, stats.evictionCount());
-        assertEquals(1, stats.maxSize());
-    }
-    
-    @Test
-    public void getLoadingError() {
-        cache.get(-1);
-        assertEquals(0, stats.hitCount());
-        assertEquals(1, stats.missCount());
-        assertEquals(1, stats.errorCount());
-        assertEquals(0, stats.evictionCount());
-        assertEquals(0, stats.maxSize());
-    }
-    
-    @Test
-    public void getUnknownValue() {
-        cache.get(-2);
-        assertEquals(0, stats.hitCount());
-        assertEquals(1, stats.missCount());
-        assertEquals(1, stats.errorCount());
-        assertEquals(0, stats.evictionCount());
-        assertEquals(0, stats.maxSize());
-    }
-    
-    @Test
-    public void loadingTime() {
-        cache.load(-3);
-        assertTrue(stats.loadingTime() > 0);
-    }
-    
-    @Test
-    public void eviction() {
-        cache.get(1);
-        cache.get(2);
-        assertEquals(1, cache.size());
-        assertEquals(1, stats.evictionCount());
-        assertEquals(1, stats.maxSize());
-    }
-    
-    @Test
-    public void keySet() {
-        cache.add(1);
-        assertEquals(Collections.singleton(1), cache.keySet());
-    }
-    
-    @Test
-    public void add() {
-        cache.add(1);
-        assertEquals("1", cache.get(1));
-        assertEquals(1, loader.count);
-        assertEquals(1, stats.hitCount());
-        assertEquals(0, stats.missCount());
-        assertEquals(0, stats.errorCount());
-    }
+	@SuppressWarnings("unchecked")
+	@Before
+	public void before() {
+		loader = mock(Loader.class);
+		cache = new Cache.Builder<Integer, String>()
+			.cache(HashMap::new)
+			.loader(loader)
+			.limit(Limit.size(1))
+			.weigher(value -> Integer.parseInt(value))
+			.policy(EvictionPolicy.WEIGHT)
+			.build();
+		stats = cache.statistics();
+		when(loader.load(1)).thenReturn("1");
+	}
 
-    @Test(expected = IllegalArgumentException.class)
-    public void addNullKey() {
-        cache.add((Integer) null);
-    }
-    
-    @Test
-    public void remove() {
-        cache.add(1);
-        cache.remove(1);
-        assertEquals(0, cache.size());
-    }
-    
-    @Test
-    public void clear() {
-        cache.add(1);
-        cache.clear();
-        assertEquals(0, cache.size());
-    }
-    
-    @Test
-    public void listener() {
-        // Add a listener
-        final Cache.Listener listener = mock(Cache.Listener.class);
-        cache.add(listener);
-        
-        // Load an entry
-        cache.get(1);
-        verify(listener).entry(Cache.Listener.Type.ADDED, 1);
-        
-        // Load another entry that should evict the first
-        cache.get(2);
-        verify(listener).entry(Cache.Listener.Type.EVICTED, 1);
-        verify(listener).entry(Cache.Listener.Type.ADDED, 2);
-    }
+	@Test
+	public void constructor() {
+		assertNotNull(stats);
+		assertEquals(0, cache.size());
+		assertEquals(0, stats.maxSize());
+		assertEquals(0, stats.hitCount());
+		assertEquals(0, stats.missCount());
+		assertEquals(0, stats.errorCount());
+		assertEquals(0, stats.evictionCount());
+		assertEquals(0L, stats.loadingTime());
+		assertEquals(0, stats.weight());
+	}
+
+	@Test
+	public void get() {
+		assertEquals("1", cache.get(1));
+		verify(loader).load(1);
+		assertEquals(1, cache.size());
+		assertEquals(1, stats.maxSize());
+		assertEquals(0, stats.hitCount());
+		assertEquals(1, stats.missCount());
+		assertEquals(0, stats.errorCount());
+		assertEquals(0, stats.evictionCount());
+		assertEquals(1, stats.weight());
+		assertTrue(stats.loadingTime() > 0);
+	}
+
+	@Test
+	public void getCached() {
+		assertEquals("1", cache.get(1));
+		assertEquals("1", cache.get(1));
+		verify(loader, times(1)).load(1);
+		assertEquals(1, cache.size());
+		assertEquals(1, stats.maxSize());
+		assertEquals(1, stats.hitCount());
+		assertEquals(1, stats.missCount());
+		assertEquals(0, stats.errorCount());
+		assertEquals(0, stats.evictionCount());
+		assertEquals(1, stats.weight());
+	}
+
+	@Test
+	public void getNullValue() {
+		when(loader.load(anyInt())).thenReturn(null);
+		assertEquals(null, cache.get(1));
+		assertEquals(0, cache.size());
+		assertEquals(0, stats.maxSize());
+		assertEquals(0, stats.hitCount());
+		assertEquals(1, stats.missCount());
+		assertEquals(1, stats.errorCount());
+		assertEquals(0, stats.evictionCount());
+		assertEquals(0, stats.weight());
+	}
+
+	@Test
+	public void add() {
+		cache.add(2, "2");
+		assertEquals("2", cache.get(2));
+		assertEquals(1, cache.size());
+		assertEquals(1, stats.maxSize());
+		assertEquals(1, stats.hitCount());
+		assertEquals(0, stats.missCount());
+		assertEquals(0, stats.errorCount());
+		assertEquals(0, stats.evictionCount());
+		assertEquals(2, stats.weight());
+	}
+
+	@Test
+	public void remove() {
+		cache.add(1, "1");
+		cache.remove(1);
+		assertEquals(0, cache.size());
+		assertEquals(1, stats.maxSize());
+		assertEquals(0, stats.hitCount());
+		assertEquals(0, stats.missCount());
+		assertEquals(0, stats.errorCount());
+		assertEquals(0, stats.evictionCount());
+		assertEquals(0, stats.weight());
+	}
+
+	@Test
+	public void clear() {
+		cache.add(1, "1");
+		cache.clear();
+		assertEquals(0, cache.size());
+		assertEquals(1, stats.maxSize());
+		assertEquals(0, stats.hitCount());
+		assertEquals(0, stats.missCount());
+		assertEquals(0, stats.errorCount());
+		assertEquals(0, stats.evictionCount());
+		assertEquals(0, stats.weight());
+	}
+
+	@Test
+	public void eviction() {
+		when(loader.load(anyInt())).thenReturn("42");
+		cache.get(1);
+		cache.get(2);
+		assertEquals(1, cache.size());
+		assertEquals(1, stats.maxSize());
+		assertEquals(0, stats.hitCount());
+		assertEquals(2, stats.missCount());
+		assertEquals(0, stats.errorCount());
+		assertEquals(1, stats.evictionCount());
+	}
+
+	@Test
+	public void listener() {
+		@SuppressWarnings("unchecked")
+		final Listener<Integer> listener = mock(Listener.class);
+		cache.add(listener);
+		when(loader.load(anyInt())).thenReturn("42");
+		cache.get(1);
+		cache.get(2);
+		verify(listener).entry(Type.ADDED, 1);
+		verify(listener).entry(Type.EVICTED, 1);
+		verify(listener).entry(Type.ADDED, 2);
+		verifyNoMoreInteractions(listener);
+	}
+
+	@Test
+	public void LRU() {
+		final Entry<?> entry = mock(Entry.class);
+		when(entry.accessed()).thenReturn(42L);
+		assertEquals(42L, EvictionPolicy.LRU.score(entry));
+	}
+
+	@Test
+	public void LFU() {
+		final Entry<?> entry = mock(Entry.class);
+		when(entry.count()).thenReturn(42);
+		assertEquals(42, EvictionPolicy.LFU.score(entry));
+	}
+
+	@Test
+	public void weightPolicy() {
+		final Entry<?> entry = mock(Entry.class);
+		when(entry.weight()).thenReturn(42);
+		assertEquals(42, EvictionPolicy.WEIGHT.score(entry));
+	}
+
+	@Test
+	public void unlimited() {
+		assertEquals(false, Limit.UNLIMITED.isFull(cache));
+	}
+
+	@Test
+	public void sizeLimit() {
+		assertEquals(false, Limit.size(1).isFull(cache));
+		cache.get(1);
+		assertEquals(true, Limit.size(1).isFull(cache));
+	}
+
+	@Test
+	public void weightLimit() {
+		assertEquals(false, Limit.weight(1).isFull(cache));
+		cache.get(1);
+		assertEquals(true, Limit.weight(1).isFull(cache));
+	}
 }

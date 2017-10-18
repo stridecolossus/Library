@@ -1,6 +1,7 @@
 package org.sarge.lib.util;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Parameter assertion methods.
@@ -59,6 +60,22 @@ public final class Check {
 	}
 
 	/**
+	 * Tests whether the given map is empty.
+	 * @param map Map
+	 * @param msg Reason
+	 * @return Map
+	 * @throws IllegalArgumentException if the given map is empty
+	 */
+	public static <K, V> Map<K, V> notEmpty(Map<K, V> map, String msg) throws IllegalArgumentException {
+		if((map == null) || map.isEmpty()) throw new IllegalArgumentException(msg);
+		return map;
+	}
+
+	public static <K, V> Map<K, V> notEmpty(Map<K, V> map) throws IllegalArgumentException {
+		return notEmpty(map, "Map cannot be empty");
+	}
+
+	/**
 	 * Tests whether the given array is empty.
 	 * @param array Array to test
 	 * @param <T> Type
@@ -72,12 +89,12 @@ public final class Check {
 		return array;
 	}
 
-	   /**
+	/**
      * Tests whether the given value is zero-or-more.
      * @param value Value to test
      */
-    public static int zeroOrMore(int value) {
-        if(value < 0) {
+    public static <T extends Number> T zeroOrMore(T value) {
+        if(value.floatValue() < 0) {
             throw new IllegalArgumentException("Must be zero-or-more");
         }
         return value;
@@ -87,8 +104,8 @@ public final class Check {
      * Tests whether the given value is one-or-more.
      * @param value Value to test
      */
-    public static int oneOrMore(int value) {
-        if(value < 1) {
+    public static <T extends Number> T oneOrMore(T value) {
+        if(value.floatValue() < 1) {
             throw new IllegalArgumentException("Must be one-or-more");
         }
         return value;
@@ -102,49 +119,13 @@ public final class Check {
      * @throws IllegalArgumentException if the value is outside of the specified
      *             range
      */
-    public static int range(int value, int min, int max) throws IllegalArgumentException {
-        if((value < min) || (value > max)) {
+    public static <T extends Number> T range(T value, T min, T max) throws IllegalArgumentException {
+    	final float f = value.floatValue();
+        if((f < min.floatValue()) || (f > max.floatValue())) {
             throw new IllegalArgumentException("Value of out range: " + value + "(" + min + ".." + max + ")");
         }
         return value;
     }
-
-	/**
-	 * Tests whether the given value is zero-or-more.
-	 * @param value Value to test
-	 */
-	public static float zeroOrMore(float value) {
-		if(value < 0) {
-            throw new IllegalArgumentException("Must be zero-or-more");
-        }
-		return value;
-	}
-
-	/**
-	 * Tests whether the given value is one-or-more.
-	 * @param value Value to test
-	 */
-	public static float oneOrMore(float value) {
-		if(value < 1) {
-            throw new IllegalArgumentException("Must be one-or-more");
-        }
-		return value;
-	}
-
-	/**
-	 * Tests whether the given value is within the specified range.
-	 * @param value Value to test
-	 * @param min Minimum
-	 * @param max Maximum
-	 * @throws IllegalArgumentException if the value is outside of the specified
-	 *             range
-	 */
-	public static float range(float value, float min, float max) throws IllegalArgumentException {
-		if((value < min) || (value > max)) {
-			throw new IllegalArgumentException("Value of out range: " + value + "(" + min + ".." + max + ")");
-		}
-        return value;
-	}
 
 	/**
 	 * Tests whether the given floating-point value is a valid 0..1 percentile.
@@ -152,6 +133,6 @@ public final class Check {
 	 * @throws IllegalArgumentException if the value is not a percentile
 	 */
 	public static float isPercentile(float f) {
-		return range(f, 0, 1);
+		return range(f, 0f, 1f);
 	}
 }

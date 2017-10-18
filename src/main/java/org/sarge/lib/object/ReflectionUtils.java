@@ -3,7 +3,7 @@ package org.sarge.lib.object;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.Iterator;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -17,7 +17,7 @@ public final class ReflectionUtils {
 	private ReflectionUtils() {
 		// Utility class
 	}
-	
+
 	private static final Predicate<Field> MEMBER = field -> {
 		final int mods = field.getModifiers();
 		return !Modifier.isStatic(mods);
@@ -29,7 +29,24 @@ public final class ReflectionUtils {
 	 * @return Member fields
 	 */
 	public static Stream<Field> getMembers(Class<?> clazz) {
-		return StreamUtil.<Class<?>>iterate(clazz, Objects::nonNull, Class::getSuperclass)
+		// TODO - Java9
+		final Iterator<Class<?>> itr = new Iterator<Class<?>>() {
+			private Class<?> current = clazz;
+
+			@Override
+			public Class<?> next() {
+				final Class<?> next = current;
+				current = current.getSuperclass();
+				return next;
+			}
+
+			@Override
+			public boolean hasNext() {
+				return current != null;
+			}
+		};
+		return StreamUtil.toStream(itr)
+		//return Stream.<Class<?>>iterate(clazz, Objects::nonNull, Class::getSuperclass)
 			.map(Class::getDeclaredFields)
 			.flatMap(Arrays::stream)
 			.filter(MEMBER);

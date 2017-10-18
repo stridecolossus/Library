@@ -1,8 +1,10 @@
 package org.sarge.lib.object;
 
-import java.util.Arrays;
+import static org.sarge.lib.util.Check.notNull;
 
-import org.sarge.lib.util.Check;
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * To-string builder.
@@ -18,21 +20,11 @@ public class ToString {
 	 */
 	public static String toString(Object obj) {
 		final ToString ts = new ToString(obj);
-		ReflectionUtils.getMembers(obj.getClass()).forEach(field -> {
+		final Consumer<Field> append = field -> {
 			final Object value = ReflectionUtils.getValue(field, obj);
-			final String str;
-			if(value == obj) {
-				str = "SELF";
-			}
-			else
-			if(value == null) {
-				str = "NULL";
-			}
-			else {
-				str = value.toString();
-			}
-			ts.append(field.getName(), str);
-		});
+			ts.append(field.getName(), value);
+		};
+		ReflectionUtils.getMembers(obj.getClass()).forEach(append);
 		return ts.toString();
 	}
 
@@ -53,8 +45,16 @@ public class ToString {
 	 * @param obj Object to be converted
 	 */
 	public ToString(Object obj) {
-		Check.notNull(obj);
-		this.obj = obj;
+		this.obj = notNull(obj);
+	}
+
+	/**
+	 * Adds commas between fields.
+	 */
+	private void appendDelimiter() {
+		if(values.length() > 0) {
+			values.append(", ");
+		}
 	}
 
 	/**
@@ -79,29 +79,37 @@ public class ToString {
 	}
 
 	/**
-	 * Adds commas between fields.
-	 */
-	private void appendDelimiter() {
-		if(values.length() > 0) {
-			values.append(", ");
-		}
-	}
-
-	/**
 	 * Adds a field value.
 	 * @param value Value to add
 	 */
 	private void appendValue(Object value) {
+		final Object converted = convert(value);
+		values.append(converted);
+	}
+
+	/**
+	 * Converts the given field value to its string representation.
+	 * @param value Field value
+	 * @return Converted object
+	 */
+	private Object convert(Object value) {
 		if(value == null) {
-			values.append("null");
+			return "NULL";
 		}
-		else if(value instanceof String) {
-			values.append(QUOTE);
-			values.append(value.toString());
-			values.append(QUOTE);
+		else
+		if(value == obj) {
+			return "SELF";
+		}
+		else
+		if(value instanceof String) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append(QUOTE);
+			sb.append(value);
+			sb.append(QUOTE);
+			return sb.toString();
 		}
 		else {
-			values.append(value.toString());
+			return value;
 		}
 	}
 

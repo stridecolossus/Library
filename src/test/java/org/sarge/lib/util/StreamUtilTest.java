@@ -23,7 +23,7 @@ public class StreamUtilTest {
 		assertEquals(true, p.test(null));
 		assertEquals(false, StreamUtil.not(p).test(null));
 	}
-	
+
 	@Test
 	public void iteratorToStream() {
 		final Iterator<Integer> itr = Arrays.asList(1, 2).iterator();
@@ -31,12 +31,7 @@ public class StreamUtilTest {
 		assertNotNull(str);
 		assertArrayEquals(new Integer[]{1, 2}, str.toArray());
 	}
-	
-	@Test
-	public void iterate() {
-		assertArrayEquals(new Integer[]{1, 2}, StreamUtil.iterate(1, i -> i < 3, i -> i + 1).toArray());
-	}
-	
+
 	@Test
 	public void findOnly() {
 		assertEquals(Optional.of(42), StreamUtil.findOnly(Stream.of(42)));
@@ -60,7 +55,7 @@ public class StreamUtilTest {
 		assertEquals(true, compound.test("one"));
 		assertEquals(false, compound.test("cobblers"));
 	}
-	
+
 	@Test
 	public void zip() {
 		final Stream<Integer> left = Stream.of(1, 2);
@@ -70,13 +65,13 @@ public class StreamUtilTest {
 		assertNotNull(stream);
 		assertArrayEquals(new String[]{"1,one", "2,two"}, stream.toArray());
 	}
-	
+
 	@Test
 	public void toMap() {
 		final Collection<Integer> c = Collections.singleton(42);
 		final Map<String, Integer> map = StreamUtil.toMap(c, i -> i.toString());
 		assertNotNull(map);
 		assertEquals(1, map.size());
-		assertEquals(new Integer(42), map.get("42"));
+		assertEquals(Integer.valueOf(42), map.get("42"));
 	}
 }

@@ -1,5 +1,7 @@
 package org.sarge.lib.object;
 
+import java.util.Objects;
+
 /**
  * Generates a hash-code using reflection.
  * @author Sarge
@@ -17,6 +19,7 @@ public final class HashCodeBuilder {
 	public static int hashCode(Object obj) {
 		return ReflectionUtils.getMembers(obj.getClass())
 			.map(field -> ReflectionUtils.getValue(field, obj))
+			.filter(Objects::nonNull)
 			.mapToInt(Object::hashCode)
 			.reduce(17, (total, hash) -> total * 37 + hash);
 	}

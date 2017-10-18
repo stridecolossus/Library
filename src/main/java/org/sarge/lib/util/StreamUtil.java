@@ -3,13 +3,11 @@ package org.sarge.lib.util;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -31,44 +29,6 @@ public final class StreamUtil {
      */
     public static <T> Predicate<T> not(Predicate<T> p) {
         return p.negate();
-    }
-
-    /**
-     * Generates a stream from the given iteration.
-     * @param seed			Start value
-     * @param hasNext		Determines when the stream terminates
-     * @param next			Produces the next element
-     * @return A new stream
-     * @throws IllegalArgumentException if any argument is <tt>null</tt>
-     * TODO - replaces with Java 9 version
-     */
-    public static <T> Stream<T> iterate(T seed, Predicate<? super T> hasNext, UnaryOperator<T> next) {
-    	Check.notNull(seed);
-    	Check.notNull(hasNext);
-    	Check.notNull(next);
-    	final Iterator<T> itr = new Iterator<T>() {
-    		private T current = seed;
-    		
-    		@Override
-    		public boolean hasNext() {
-    			if(hasNext.test(current)) {
-    				return true;
-    			}
-    			else {
-    				current = null;
-    				return false;
-    			}
-    		}
-    		
-    		@Override
-    		public T next() {
-    			if(current == null) throw new NoSuchElementException();
-    			final T result = current;
-    			current = next.apply(current);
-    			return result;
-    		}
-		};
-		return toStream(itr);
     }
 
     /**
@@ -131,7 +91,7 @@ public final class StreamUtil {
 		final Iterable<T> iterable = () -> itr;
 		return StreamSupport.stream(iterable.spliterator(), parallel);
 	}
-	
+
 	/**
 	 * Creates a compound predicate from the given list using {@link Predicate#and} with a <tt>true</tt> default result.
 	 * @param predicates Predicates
@@ -140,7 +100,7 @@ public final class StreamUtil {
 	public static <T> Predicate<T> compoundPredicate(Collection<Predicate<T>> predicates) {
 		return compoundPredicate(predicates, Predicate::and, true);
 	}
-	
+
 	/**
 	 * Creates a compound predicate from the given list.
 	 * @param predicates	Predicates
