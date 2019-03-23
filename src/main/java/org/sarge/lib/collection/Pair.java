@@ -5,8 +5,8 @@ import java.util.function.BiFunction;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
-import org.sarge.lib.object.EqualsBuilder;
-import org.sarge.lib.object.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
  * Pair of objects.
@@ -14,35 +14,14 @@ import org.sarge.lib.object.HashCodeBuilder;
  * @param <T> Type
  */
 public class Pair<L, R> {
-	private final L left;
-	private final R right;
-
-	public Pair(L left, R right) {
-		this.left = left;
-		this.right = right;
-	}
-
-	public L getLeft() {
-		return left;
-	}
-
-	public R getRight() {
-		return right;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return EqualsBuilder.equals(this, obj);
-	}
-	
-	@Override
-	public int hashCode() {
-		return HashCodeBuilder.hashCode(this);
-	}
-
-	@Override
-	public String toString() {
-		return left + "/" + right;
+	/**
+	 * Creates a pair.
+	 * @param left		Left-hand object
+	 * @param right		Right-hand object
+	 * @return New pair
+	 */
+	public static <L, R> Pair<L, R> of(L left, R right) {
+		return new Pair<>(left, right);
 	}
 
 	/**
@@ -53,10 +32,52 @@ public class Pair<L, R> {
 	}
 
 	/**
-	 * Creates a collector for a stream of pairs.
+	 * Creates a map collector for a stream of pairs.
 	 * @return Pair collector
 	 */
 	public static <L, R> Collector<Pair<L, R>, ?, Map<L, R>> toMap() {
-		return Collectors.toMap(Pair::getLeft, Pair::getRight);
+		return Collectors.toMap(Pair::left, Pair::right);
+	}
+
+	private final L left;
+	private final R right;
+
+	/**
+	 * Constructor.
+	 * @param left		Left-hand object
+	 * @param right		Right-hand object
+	 */
+	private Pair(L left, R right) {
+		this.left = left;
+		this.right = right;
+	}
+
+	/**
+	 * @return Left-hand object
+	 */
+	public L left() {
+		return left;
+	}
+
+	/**
+	 * @return Right-hand object
+	 */
+	public R right() {
+		return right;
+	}
+
+	@Override
+	public boolean equals(Object that) {
+		return EqualsBuilder.reflectionEquals(this, that);
+	}
+
+	@Override
+	public int hashCode() {
+		return HashCodeBuilder.reflectionHashCode(this);
+	}
+
+	@Override
+	public String toString() {
+		return left + "/" + right;
 	}
 }

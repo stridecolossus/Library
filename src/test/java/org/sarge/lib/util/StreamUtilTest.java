@@ -1,20 +1,19 @@
 package org.sarge.lib.util;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class StreamUtilTest {
 	@Test
@@ -26,10 +25,20 @@ public class StreamUtilTest {
 
 	@Test
 	public void iteratorToStream() {
-		final Iterator<Integer> itr = Arrays.asList(1, 2).iterator();
-		final Stream<Integer> str = StreamUtil.toStream(itr);
+		final var itr = Arrays.asList(1, 2).iterator();
+		final var str = StreamUtil.toStream(itr);
 		assertNotNull(str);
 		assertArrayEquals(new Integer[]{1, 2}, str.toArray());
+	}
+
+	@Test
+	public void select() {
+		final var c = Arrays.asList(Integer.valueOf(1), Float.valueOf(2f));
+		assertEquals(1, StreamUtil.select(Integer.class, c.stream()).count());
+		assertEquals(1, StreamUtil.select(Float.class, c.stream()).count());
+		assertEquals(2, StreamUtil.select(Number.class, c.stream()).count());
+		assertEquals(0, StreamUtil.select(Long.class, c.stream()).count());
+		assertEquals(Integer.valueOf(1), StreamUtil.select(Integer.class, c.stream()).iterator().next());
 	}
 
 	@Test

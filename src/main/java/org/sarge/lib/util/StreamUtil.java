@@ -32,6 +32,18 @@ public final class StreamUtil {
     }
 
     /**
+     * Selects elements of the given class from a stream.
+     * @param clazz			Class
+     * @param stream		Stream
+     * @return Stream of the given class
+     */
+    public static <T> Stream<T> select(Class<? extends T> clazz, Stream<?> stream) {
+    	return stream
+    		.filter(obj -> clazz.isAssignableFrom(obj.getClass()))
+    		.map(obj -> clazz.cast(obj));
+    }
+
+    /**
 	 * Creates a finite stream from the given iterator.
 	 * @param itr Iterator
 	 * @return Stream

@@ -1,17 +1,19 @@
 package org.sarge.lib.util;
 
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CheckTest {
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void isNullObject() {
-        Check.notNull(null);
+    	assertThrows(IllegalArgumentException.class, () -> Check.notNull(null));
     }
 
     @Test
@@ -20,9 +22,9 @@ public class CheckTest {
         assertEquals(obj, Check.notNull(obj));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void isEmptyString() {
-        Check.notEmpty(new String(""));
+    	assertThrows(IllegalArgumentException.class, () -> Check.notEmpty(new String("")));
     }
 
     @Test
@@ -31,20 +33,20 @@ public class CheckTest {
         assertEquals(str, Check.notEmpty(str));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void isEmptyCollection() {
-        Check.notEmpty(Collections.emptyList());
+    @Test
+    public void emptyCollection() {
+    	assertThrows(IllegalArgumentException.class, () -> Check.notEmpty(List.of()));
     }
 
     @Test
     public void notEmptyCollection() {
-        final List<Object> list = Collections.singletonList(new Object());
+    	final var list = List.of(new Object());
         assertEquals(list, Check.notEmpty(list));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void emptyMap() {
-    	Check.notEmpty(Collections.emptyMap());
+    	assertThrows(IllegalArgumentException.class, () -> Check.notEmpty(Map.of()));
     }
 
     @Test
@@ -52,9 +54,9 @@ public class CheckTest {
     	Check.notEmpty(Collections.singletonMap("key", "value"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void isEmptyArray() {
-        Check.notEmpty(new Object[]{});
+    @Test
+    public void emptyArray() {
+    	assertThrows(IllegalArgumentException.class, () -> Check.notEmpty(new Object[]{}));
     }
 
     @Test
@@ -75,9 +77,9 @@ public class CheckTest {
         Check.zeroOrMore(1L);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void zeroOrMoreInvalid() {
-        Check.zeroOrMore(-1);
+    	assertThrows(IllegalArgumentException.class, () -> Check.zeroOrMore(-1));
     }
 
     @Test
@@ -87,9 +89,9 @@ public class CheckTest {
         Check.oneOrMore(1L);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void oneOrMoreInvalid() {
-        Check.oneOrMore(0);
+    	assertThrows(IllegalArgumentException.class, () -> Check.oneOrMore(0));
     }
 
     @Test
@@ -99,8 +101,8 @@ public class CheckTest {
         Check.range(2L, 1L, 3L);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void rangeInvalid() {
-        Check.range(42, 1, 3);
+    	assertThrows(IllegalArgumentException.class, () -> Check.range(42, 1, 3));
     }
 }

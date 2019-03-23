@@ -8,25 +8,24 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.lib.collection.InverseMap;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.sarge.lib.collection.InverseMap.InverseHashMap;
 
 public class InverseMapTest {
-    private InverseMap<Integer, String> map;
-    
-    @Before
+    private InverseHashMap<Integer, String> map;
+
+    @BeforeEach
     public void before() {
         map = new InverseHashMap<>();
     }
-    
+
     @Test
     public void constructor() {
         assertEquals(true, map.isEmpty());
         assertEquals(0, map.size());
     }
-    
+
     @Test
     public void inverse() {
         final Map<String, Integer> inverse = map.inverse();
@@ -34,27 +33,35 @@ public class InverseMapTest {
         assertEquals(true, inverse.isEmpty());
         assertEquals(0, inverse.size());
     }
-    
+
     @Test
     public void put() {
         map.put(1, "one");
         compare();
     }
-    
+
     @Test
     public void putAll() {
         map.putAll(Collections.singletonMap(1, "one"));
         compare();
     }
-    
+
     @Test
     public void remove() {
         map.put(1, "one");
-        map.remove(1);
+        assertEquals("one", map.remove(1));
         assertEquals(true, map.isEmpty());
         assertEquals(true, map.inverse().isEmpty());
     }
-    
+
+    @Test
+    public void removeValue() {
+        map.put(1, "one");
+        assertEquals(Integer.valueOf(1), map.removeValue("one"));
+        assertEquals(true, map.isEmpty());
+        assertEquals(true, map.inverse().isEmpty());
+    }
+
     private void compare() {
         assertEquals(1, map.size());
         compare(Collections.singleton(1), map.keySet());

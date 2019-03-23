@@ -3,6 +3,8 @@ package org.sarge.lib.util;
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Parameter assertion methods.
  * @author Sarge
@@ -36,7 +38,7 @@ public final class Check {
 	 * @throws IllegalArgumentException if the given string is empty
 	 */
 	public static String notEmpty(String str, String msg) throws IllegalArgumentException {
-		if(StringUtil.isEmpty(str)) throw new IllegalArgumentException(msg);
+		if(StringUtils.isEmpty(str)) throw new IllegalArgumentException(msg);
 		return str;
 	}
 
@@ -116,8 +118,7 @@ public final class Check {
      * @param value Value to test
      * @param min Minimum
      * @param max Maximum
-     * @throws IllegalArgumentException if the value is outside of the specified
-     *             range
+     * @throws IllegalArgumentException if the value is outside of the specified range
      */
     public static <T extends Number> T range(T value, T min, T max) throws IllegalArgumentException {
     	final float f = value.floatValue();

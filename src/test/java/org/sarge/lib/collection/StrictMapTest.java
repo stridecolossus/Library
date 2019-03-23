@@ -1,43 +1,44 @@
 package org.sarge.lib.collection;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.lib.collection.StrictMap;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class StrictMapTest {
 	private Map<String, Object> map;
 
-	@Before
+	@BeforeEach
 	public void before() {
 		map = new StrictMap<>();
 	}
 
 	@Test
 	public void nullValue() {
-		map.put( new String(), null );
+		map.put(new String(), null);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void nullKey() {
-		map.put( null, new Object() );
+		assertThrows(IllegalArgumentException.class, () -> map.put(null, new Object()));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void duplicateKey() {
 		final String key = new String();
-		map.put( key, new Object() );
-		map.put( key, new Object() );
+		map.put(key, new Object());
+		assertThrows(IllegalArgumentException.class, () -> map.put(key, new Object()));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void removeNull() {
-		map.remove( null );
+		assertThrows(IllegalArgumentException.class, () -> map.remove(null));
 	}
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void removeNotPresent() {
-		map.remove( new String() );
+		assertThrows(IllegalArgumentException.class, () -> map.remove(new String()));
 	}
 }

@@ -1,41 +1,32 @@
 package org.sarge.lib.util;
 
-import java.util.Arrays;
-import java.util.function.Supplier;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
  * General utilities.
  * @author Sarge
  */
 public final class Util {
-	private Util() {
-		// Utilities class
-	}
+	public static final String CARRIAGE_RETURN = System.getProperty("line.separator");
+	public static final String SEPARATOR = System.getProperty("file.separator");
 
 	/**
-	 * Looks up the enum constant with the specified name.
-	 * @param name			Enum constant name
-	 * @param clazz			Enum class
-	 * @return Enum constant
-	 * @param <E> Enumeration
-	 * @throws NumberFormatException if the constant is invalid
+	 * Primitive wrapper types.
 	 */
-	public static <E extends Enum<E>> E getEnumConstant(String name, Class<E> clazz) throws NumberFormatException {
-		return getEnumConstant(name, clazz, () -> new NumberFormatException("Unknown enum constant: " + name));
-	}
-	
-	/**
-	 * Looks up the enum constant with the specified name or throw an exception of the given type.
-	 * @param name			Enum constant name
-	 * @param clazz			Enum class
-	 * @param exception		Exception supplier
-	 * @return Enum constant
-	 * @param <E> Enumeration
-	 * @param <X> Exception
-	 */
-	public static <E extends Enum<E>, X extends RuntimeException> E getEnumConstant(String name, Class<E> clazz, Supplier<? extends X> exception) throws X {
-		final String str = name.trim().toUpperCase().replace("-", "_");
-		return Arrays.stream(clazz.getEnumConstants()).filter(e -> e.name().equals(str)).findFirst().orElseThrow(exception);
+	public static final Set<Class<?>> PRIMITIVES = Set.of(
+		Byte.TYPE,
+		Short.TYPE,
+		Integer.TYPE,
+		Long.TYPE,
+		Float.TYPE,
+		Double.TYPE,
+		Boolean.TYPE,
+		Character.TYPE
+	);
+
+	private Util() {
+		// Utilities class
 	}
 
 	/**
@@ -47,8 +38,70 @@ public final class Util {
 	public static void kip(long time) {
 		try {
 			Thread.sleep(time);
-		} catch(InterruptedException e) {
+		}
+		catch(InterruptedException e) {
 		    // Ignored
 		}
+	}
+
+	/**
+	 * Clamps an integer value to the given range.
+	 * @param value			Value to clamp
+	 * @param min			Minimum
+	 * @param max			Maximum
+	 * @return Clamped value
+	 */
+	public static int clamp(int value, int min, int max) {
+		if(value < min) {
+			return min;
+		}
+		else
+		if(value > max) {
+			return max;
+		}
+		else {
+			return value;
+		}
+	}
+
+	/**
+	 * Clamps a floating-point value value to the given range.
+	 * @param value			Value to clamp
+	 * @param min			Minimum
+	 * @param max			Maximum
+	 * @return Clamped value
+	 */
+	public static float clamp(float value, float min, float max) {
+		if(value < min) {
+			return min;
+		}
+		else
+		if(value > max) {
+			return max;
+		}
+		else {
+			return value;
+		}
+	}
+
+	public static boolean isEmpty(String cat) {
+		return (cat == null) || cat.isEmpty();
+	}
+
+	// https://touk.pl/blog/2017/10/01/sneakily-throwing-exceptions-in-lambda-expressions-in-java/
+	@SuppressWarnings("unchecked")
+	public static <T extends Exception, R> R rethrow(Exception e) throws T {
+		throw (T) e;
+	}
+
+	public static <T, R> Function<T, R> unchecked(Function<T, R> f) {
+		return t -> {
+			try {
+				return f.apply(t);
+			}
+			catch(Exception e) {
+				throw new RuntimeException("Rethrow: " + e.getMessage(), e);
+			}
+		};
 	}
 }

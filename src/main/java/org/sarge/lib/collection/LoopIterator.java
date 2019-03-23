@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.sarge.lib.object.ToString;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.sarge.lib.util.Check;
 
 /**
@@ -47,6 +47,14 @@ public class LoopIterator<T> implements Iterator<T> {
 		this.strategy = strategy;
 		itr = list.listIterator();
 		forwards = true;
+	}
+
+	/**
+	 * Convenience constructor for a {@link Strategy#LOOP} iterator.
+	 * @param c Collection
+	 */
+	public LoopIterator(Collection<T> c) {
+		this(c, Strategy.LOOP);
 	}
 
 	/**
@@ -92,7 +100,7 @@ public class LoopIterator<T> implements Iterator<T> {
 
 	@Override
 	public String toString() {
-		final ToString ts = new ToString(this);
+		final ToStringBuilder ts = new ToStringBuilder(this);
 		ts.append("index", list.indexOf(current));
 		ts.append("size", list.size());
 		return ts.toString();

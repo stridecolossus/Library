@@ -6,14 +6,14 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.StringReader;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.lib.util.StringUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class ElementLoaderTest {
 	private ElementLoader loader;
 
-	@Before
+	@BeforeEach
 	public void before() {
 		loader = new ElementLoader();
 	}
@@ -35,10 +35,12 @@ public class ElementLoaderTest {
 		// Check parent
 		assertEquals("parent", parent.name());
 		assertEquals(null, parent.parent());
-		assertEquals(StringUtil.EMPTY_STRING, parent.text());
+		assertEquals(true, parent.isRoot());
+		assertEquals(StringUtils.EMPTY, parent.text());
 
 		// Check attributes
-		assertEquals("value", parent.attributes().toString("name", null));
+		assertNotNull(parent.attribute("name"));
+		assertEquals("value", parent.attribute("name").toText());
 
 		// Check children
 		assertNotNull(parent.children());
@@ -48,6 +50,7 @@ public class ElementLoaderTest {
 		final Element child = parent.children().iterator().next();
 		assertEquals("child", child.name());
 		assertEquals(parent, child.parent());
+		assertEquals(false, child.isRoot());
 		assertEquals("text", child.text());
 		assertNotNull(child.children());
 		assertEquals(0, child.children().count());

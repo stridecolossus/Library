@@ -1,37 +1,39 @@
 package org.sarge.lib.collection;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.lib.collection.StrictSet;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class StrictSetTest {
 	private Set<String> set;
 
-	@Before
+	@BeforeEach
 	public void before() {
 		set = new StrictSet<>();
 	}
 
-	@Test( expected = IllegalArgumentException.class )
+	@Test
 	public void addNull() {
-		set.add( null );
+		assertThrows(IllegalArgumentException.class, () -> set.add(null));
 	}
 
-	@Test( expected = IllegalArgumentException.class )
+	@Test
 	public void addDuplicate() {
 		final String str = new String();
-		set.add( str );
-		set.add( str );
+		set.add(str);
+		assertThrows(IllegalArgumentException.class, () -> set.add(str));
 	}
 
-	@Test( expected = IllegalArgumentException.class )
+	@Test
 	public void removeNull() {
-		set.remove( null );
+		assertThrows(IllegalArgumentException.class, () -> set.remove(null));
 	}
 
-	@Test( expected = IllegalArgumentException.class )
+	@Test
 	public void removeNotPresent() {
-		set.remove( new String() );
+		assertThrows(IllegalArgumentException.class, () -> set.remove(new String()));
 	}
 }

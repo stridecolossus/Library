@@ -1,6 +1,7 @@
 package org.sarge.lib.collection;
 
 import java.util.AbstractSet;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -16,11 +17,11 @@ public class StrictSet<E> extends AbstractSet<E> {
 	private final Set<E> set;
 
 	public StrictSet() {
-		this( new HashSet<E>() );
+		this(new HashSet<E>());
 	}
 
-	public StrictSet( Set<E> set ) {
-		this.set = set;
+	public StrictSet(Collection<E> set) {
+		this.set = new HashSet<>(set);
 	}
 
 	@Override
@@ -34,18 +35,18 @@ public class StrictSet<E> extends AbstractSet<E> {
 	}
 
 	@Override
-	public boolean add( E e ) {
-		Check.notNull( e );
-		if( set.contains( e ) ) throw new IllegalArgumentException( "Duplicate entry: " + e );
-		set.add( e );
+	public boolean add(E e) {
+		Check.notNull(e);
+		if(set.contains(e)) throw new IllegalArgumentException("Duplicate entry: " + e);
+		set.add(e);
 		return true;
 	}
 
 	@Override
-	public boolean remove( Object obj ) {
-		Check.notNull( obj );
-		if( !set.contains( obj ) ) throw new IllegalArgumentException( "Not a member: " + obj );
-		set.remove( obj );
+	public boolean remove(Object obj) {
+		Check.notNull(obj);
+		if(!set.contains(obj)) throw new IllegalArgumentException("Not a member: " + obj);
+		set.remove(obj);
 		return true;
 	}
 }

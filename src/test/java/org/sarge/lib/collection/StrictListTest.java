@@ -1,38 +1,39 @@
 package org.sarge.lib.collection;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.sarge.lib.collection.StrictList;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class StrictListTest {
 	private List<String> list;
 
-	@Before
+	@BeforeEach
 	public void before() {
 		list = new StrictList<>();
 	}
 
-	@Test( expected = IllegalArgumentException.class)
+	@Test
 	public void addNull() {
-		list.add( null );
+		assertThrows(IllegalArgumentException.class, () -> list.add(null));
 	}
 
-	@Test( expected = IllegalArgumentException.class)
+	@Test
 	public void addDuplicate() {
 		final String str = new String();
-		list.add( str );
-		list.add( str );
+		list.add(str);
+		assertThrows(IllegalArgumentException.class, () -> list.add(str));
 	}
 
-	@Test( expected = IllegalArgumentException.class)
+	@Test
 	public void removeNull() {
-		list.remove( null );
+		assertThrows(IllegalArgumentException.class, () -> list.remove(null));
 	}
 
-	@Test( expected = IllegalArgumentException.class)
+	@Test
 	public void removeNotPresent() {
-		list.remove( new String() );
+		assertThrows(IllegalArgumentException.class, () -> list.remove(new String()));
 	}
 }

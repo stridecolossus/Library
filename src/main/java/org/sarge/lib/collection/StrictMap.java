@@ -20,8 +20,9 @@ public class StrictMap<K, V> extends AbstractMap<K, V> {
 		this.map = new HashMap<>();
 	}
 
-	public StrictMap( Map<K, V> map ) {
-		this.map = map;
+	public StrictMap(Map<K, V> map) {
+		this.map = new HashMap<>(map.size());
+		map.entrySet().stream().forEach(entry -> put(entry.getKey(), entry.getValue()));
 	}
 
 	@Override
@@ -30,16 +31,16 @@ public class StrictMap<K, V> extends AbstractMap<K, V> {
 	}
 
 	@Override
-	public V put( K key, V value ) {
-		Check.notNull( key );
-		if( map.containsKey( key ) ) throw new IllegalArgumentException( "Duplicate key: " + key );
-		return map.put( key, value );
+	public V put(K key, V value) {
+		Check.notNull(key);
+		if(map.containsKey(key)) throw new IllegalArgumentException("Duplicate key: " + key);
+		return map.put(key, value);
 	}
 
 	@Override
-	public V remove( Object key ) {
-		Check.notNull( key );
-		if( !map.containsKey( key ) ) throw new IllegalArgumentException( "Unknown key: " + key );
-		return super.remove( key );
+	public V remove(Object key) {
+		Check.notNull(key);
+		if(!map.containsKey(key)) throw new IllegalArgumentException("Unknown key: " + key);
+		return super.remove(key);
 	}
 }

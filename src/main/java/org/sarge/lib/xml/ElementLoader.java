@@ -18,17 +18,17 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 /**
- * Loads XML from an input stream.
+ * Loader for an XML document.
  * @author Sarge
  */
 public class ElementLoader {
 	private static final DocumentBuilderFactory FACTORY = DocumentBuilderFactory.newInstance();
-	
+
 	private final DocumentBuilder builder;
-	
+
 	/**
 	 * Constructor.
-	 * @throws RuntimeException if the underlying SAX parser cannot be instantiated
+	 * @throws RuntimeException if the underlying XML parser cannot be instantiated
 	 */
 	public ElementLoader() {
 		try {
@@ -47,36 +47,35 @@ public class ElementLoader {
 	 */
 	public Element load(Reader in) throws IOException {
 		// Load XML
-		// TODO - auto-close?
 		final Document doc;
-		try {
-			doc = builder.parse(new InputSource(new BufferedReader(in)));
+		try(final BufferedReader r = new BufferedReader(in)) {
+			doc = builder.parse(new InputSource(r));
 		}
 		catch(Exception e) {
 			throw new IOException("Error parsing XML", e);
 		}
-		
+
 		// Convert to element tree
-		return parse(doc.getDocumentElement(), null);
+		return parse(doc.getDocumentElement());
 	}
-	
+
 	/**
 	 * Recursively parses a W3C element.
 	 * @param xml W3C element
 	 * @return Element
 	 */
-	private static Element parse(org.w3c.dom.Element xml, Element parent) {
+	private static Element parse(org.w3c.dom.Element xml) {
 		// Start new element
 		assert xml.getNodeType() == Node.ELEMENT_NODE;
 		final Builder builder = new Builder(xml.getNodeName());
-		
+
 		// Parse attributes
 		final NamedNodeMap attrs = xml.getAttributes();
 		for(int n = 0; n < attrs.getLength(); ++n) {
 			final Node node = attrs.item(n);
 			builder.attribute(node.getNodeName(), node.getNodeValue());
 		}
-		
+
 		// Load child nodes and element text
 		final List<Node> children = new ArrayList<>();
 		final NodeList nodes = xml.getChildNodes();
@@ -92,22 +91,20 @@ public class ElementLoader {
 				// Load text content
 				builder.text(node.getNodeValue());
 				break;
-				
+
 			default:
 				// Ignore others
 				break;
 			}
 		}
 
-		// Construct element
-		builder.parent(parent);
-		final Element element = builder.build();
-		
 		// Parse children
 		for(Node node : children) {
-			parse((org.w3c.dom.Element) node, element);
+			final Element child = parse((org.w3c.dom.Element) node);
+			builder.add(child);
 		}
 
-		return element;
+		// Construct element
+		return builder.build();
 	}
 }
