@@ -1,6 +1,7 @@
 package org.sarge.lib.util;
 
 import static java.util.stream.Collectors.toMap;
+import static org.sarge.lib.util.Check.notNull;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -65,29 +66,65 @@ public interface Converter<T> extends Function<String, T> {
 	};
 
 	/**
-	 * Creates a converter for the given enumeration.
+	 * An <i>enumeration converter</i> maps a string value to an enumeration.
 	 * <p>
 	 * Notes:
 	 * <ul>
-	 * <li>comparisons are case-insensitive</li>
-	 * <li>enumeration constants with under-score characters are replaced by hyphens</li>
+	 * <li>comparisons are case-insensitive</i>
+	 * <li>enumeration constants have hyphens replacing any underscores</li>
 	 * </ul>
-	 * <p>
-	 * @param clazz Enumeration class
-	 * @return Enumeration converter
-	 * @throws NumberFormatException if the constant is not valid
 	 * @param <E> Enumeration
 	 */
-	static <E extends Enum<E>> Converter<E> enumeration(Class<E> clazz) throws NumberFormatException {
-		// Build constant lookup map with cleaned keys
-		final Function<E, String> mapper = e -> e.name().toLowerCase();
-		final Map<String, E> map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(mapper, Function.identity()));
+	class EnumerationConverter<E extends Enum<E>> implements Converter<E> {
+		private final Map<String, E> map;
 
-		// Create converter
-		return name -> {
-			final E result = map.get(name.toLowerCase().replaceAll("-", "_"));
-			if(result == null) throw new NumberFormatException("Unknown enum constant: " + name);
+		/**
+		 * Constructor.
+		 * @param clazz Enumeration class
+		 */
+		public EnumerationConverter(Class<E> clazz) {
+			map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(this::name, Function.identity()));
+		}
+
+		private String name(E key) {
+			return key.name().toLowerCase().replaceAll("_", "-");
+		}
+
+		@Override
+		public E apply(String str) throws NumberFormatException {
+			final E result = map.get(str.toLowerCase());
+			if(result == null) throw new NumberFormatException("Unknown enumeration constant: " + str);
 			return result;
-		};
+		}
+	}
+
+	/**
+	 * A <i>table converter</i> is an adapter for a converter with a lookup table of values (case insensitive).
+	 * @param <T> Conversion type
+	 */
+	class TableConverter<T> implements Converter<T> {
+		private final Map<String, T> table;
+		private final Converter<T> converter;
+
+		/**
+		 * Constructor.
+		 * @param table				Table
+		 * @param converter			Delegate converter
+		 */
+		public TableConverter(Map<String, T> table, Converter<T> converter) {
+			this.table = Map.copyOf(table);
+			this.converter = notNull(converter);
+		}
+
+		@Override
+		public T apply(String str) throws NumberFormatException {
+			final T value = table.get(str.toLowerCase());
+			if(value == null) {
+				return converter.apply(str);
+			}
+			else {
+				return value;
+			}
+		}
 	}
 }

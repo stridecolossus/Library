@@ -1,4 +1,4 @@
-package org.sarge.lib.collection;
+package org.sarge.lib.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.sarge.lib.util.SoftMap;
 
 public class SoftMapTest {
 	private SoftMap<Integer, String> map;

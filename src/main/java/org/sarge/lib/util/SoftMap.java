@@ -1,4 +1,4 @@
-package org.sarge.lib.collection;
+package org.sarge.lib.util;
 
 import static org.sarge.lib.util.Check.zeroOrMore;
 
