@@ -1,7 +1,7 @@
 package org.sarge.lib.util;
 
 /**
- * A <i>percentile</i> represents a percentage number.
+ * A <i>percentile</i> represents a percentage numeric.
  * @author Sarge
  * @see Check#isPercentile(float)
  */
@@ -14,7 +14,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	/**
 	 * Zero percentile.
 	 */
-	public static final Percentile ZERO = new Percentile(0f);
+	public static final Percentile ZERO = new Percentile(0);
 
 	/**
 	 * 50% percentile.
@@ -24,7 +24,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	/**
 	 * 100% percentile.
 	 */
-	public static final Percentile ONE = new Percentile(1f);
+	public static final Percentile ONE = new Percentile(1);
 
 	private static final Percentile[] INTEGERS = new Percentile[MAX + 1];
 
@@ -36,9 +36,9 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 
 	/**
 	 * Creates an integer percentile.
-	 * @param value Percentile as a 0..100 integer
+	 * @param value Percentile as a 0..100 integer (inclusive)
 	 * @return Percentile
-	 * @throws ArrayIndexOutOfBoundsException if the given value is not in the range 0...100
+	 * @throws ArrayIndexOutOfBoundsException if the given value is not a valid percentile
 	 */
 	public static Percentile of(int value) {
 		return INTEGERS[value];
@@ -46,11 +46,11 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 
 	/**
 	 * Parses a percentile from the given string representation.
-	 * Assumes the string is either a 0..1 floating-point value or a 0..100 integer.
+	 * <p>
+	 * A string containing a decimal point is assumed to be a 0..1 floating point value, otherwise it is treated as a 0..100 integer.
+	 *
 	 * @param str Percentile as a string
 	 * @return Percentile
-	 * @see Float#parseFloat(String)
-	 * @see Integer#parseInt(String)
 	 */
 	public static Percentile parse(String str) {
 		if(str.indexOf('.') >= 0) {
@@ -68,12 +68,11 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	 * @param value Percentile as a 0..1 floating-point value
 	 */
 	public Percentile(float value) {
-		Check.isPercentile(value);
-		this.value = value;
+		this.value = Check.isPercentile(value);
 	}
 
 	/**
-	 * @return Whether this percentile is zero
+	 * @return Whether this percentile is equal to zero
 	 */
 	public boolean isZero() {
 		return Float.floatToIntBits(value) == 0;

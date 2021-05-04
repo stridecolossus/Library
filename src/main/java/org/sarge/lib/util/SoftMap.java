@@ -14,8 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
  * Map with softly referenced values.
  * @author Sarge
@@ -210,14 +208,5 @@ public class SoftMap<K, V> implements Map<K, V> {
 			}
 		}
 		return result.entrySet();
-	}
-
-	@Override
-	public String toString() {
-		final var ts = new ToStringBuilder(this);
-		ts.append("size", map.size());
-		ts.append("hard", refs.size());
-		ts.append("min", min);
-		return ts.toString();
 	}
 }

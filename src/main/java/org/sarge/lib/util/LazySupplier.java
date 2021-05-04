@@ -6,8 +6,8 @@ import java.util.function.Supplier;
 
 /**
  * A <i>lazy supplier</i> is a thread-safe <i>lazy initialisation</i> implementation.
+ * @param <T> Supplied type
  * @author Sarge
- * @param <T> Resource type
  */
 public class LazySupplier<T> implements Supplier<T> {
 	private final Supplier<T> supplier;
@@ -24,7 +24,7 @@ public class LazySupplier<T> implements Supplier<T> {
 
 	@Override
 	public T get() {
-		final T result = value;
+		final T result = value;		// Perform read
 
 		if(result == null) {
 			synchronized(this) {

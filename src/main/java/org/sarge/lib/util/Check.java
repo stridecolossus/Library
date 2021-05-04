@@ -3,10 +3,8 @@ package org.sarge.lib.util;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
- * Parameter assertion methods.
+ * Utility class providing various parameter validation methods.
  * @author Sarge
  */
 public final class Check {
@@ -16,48 +14,48 @@ public final class Check {
 
 	/**
 	 * Checks that the given object is not {@code null}.
-	 * @param obj Object to test
+	 * @param obj Non-null object
 	 * @param msg Reason
-	 * @throws IllegalArgumentException if the given object is <tt>null</tt>
+	 * @throws IllegalArgumentException if the given object is {@code null}
 	 */
-	public static <T> T notNull(T obj, String msg) throws IllegalArgumentException {
+	public static <T> T notNull(T obj, String msg) {
 		if(obj == null) {
             throw new IllegalArgumentException(msg);
         }
 		return obj;
 	}
 
-	public static <T> T notNull(T obj) throws IllegalArgumentException {
+	public static <T> T notNull(T obj) {
 		return notNull(obj, "Cannot be null");
 	}
 
 	/**
 	 * Checks that the given string is not {@code null} or empty.
-	 * @param str String to test
+	 * @param str String
 	 * @param msg Reason
 	 * @throws IllegalArgumentException if the given string is empty
 	 */
-	public static String notEmpty(String str, String msg) throws IllegalArgumentException {
-		if(StringUtils.isEmpty(str)) throw new IllegalArgumentException(msg);
+	public static String notEmpty(String str, String msg) {
+		if((str == null) || str.isEmpty()) throw new IllegalArgumentException(msg);
 		return str;
 	}
 
-	public static String notEmpty(String str) throws IllegalArgumentException {
+	public static String notEmpty(String str) {
 		return notEmpty(str, "String cannot be empty");
 	}
 
 	/**
 	 * Checks that the given collection is not {@code null} or empty.
-	 * @param c Collection to test
+	 * @param c Collection
 	 * @param msg Reason
 	 * @throws IllegalArgumentException if the given collection is empty
 	 */
-	public static <T> Collection<T> notEmpty(Collection<T> c, String msg) throws IllegalArgumentException {
+	public static <T> Collection<T> notEmpty(Collection<T> c, String msg) {
 		if((c == null) || c.isEmpty()) throw new IllegalArgumentException(msg);
 		return c;
 	}
 
-	public static <T> Collection<T> notEmpty(Collection<T> c) throws IllegalArgumentException {
+	public static <T> Collection<T> notEmpty(Collection<T> c) {
 		return notEmpty(c, "Collection cannot be empty");
 	}
 
@@ -68,23 +66,23 @@ public final class Check {
 	 * @return Map
 	 * @throws IllegalArgumentException if the given map is empty
 	 */
-	public static <K, V> Map<K, V> notEmpty(Map<K, V> map, String msg) throws IllegalArgumentException {
+	public static <K, V> Map<K, V> notEmpty(Map<K, V> map, String msg) {
 		if((map == null) || map.isEmpty()) throw new IllegalArgumentException(msg);
 		return map;
 	}
 
-	public static <K, V> Map<K, V> notEmpty(Map<K, V> map) throws IllegalArgumentException {
+	public static <K, V> Map<K, V> notEmpty(Map<K, V> map) {
 		return notEmpty(map, "Map cannot be empty");
 	}
 
 	/**
 	 * Checks that the given array is not {@code null} or empty.
-	 * @param array Array to test
+	 * @param array Array
 	 * @param <T> Array component type
 	 * @throws IllegalArgumentException if the given array is empty
 	 */
-	public static <T> T[] notEmpty(T[] array) throws IllegalArgumentException {
-		if(array == null || (array.length == 0)) {
+	public static <T> T[] notEmpty(T[] array) {
+		if((array == null) || (array.length == 0)) {
 			throw new IllegalArgumentException("Array cannot be empty");
 		}
 		return array;
@@ -93,61 +91,62 @@ public final class Check {
 	/**
      * Checks that the given number is zero-or-more.
      * @param <T> Number type
-     * @param value Value to test
+     * @param num Number
      */
-    public static <T extends Number> T zeroOrMore(T value) {
-        if(value.floatValue() < 0) {
+    public static <T extends Number> T zeroOrMore(T num) {
+        if(num.floatValue() < 0) {
             throw new IllegalArgumentException("Must be zero-or-more");
         }
-        return value;
+        return num;
     }
 
     /**
      * Checks that the given number is one-or-more.
      * @param <T> Number type
-     * @param value Value to test
+     * @param num Value to test
      */
-    public static <T extends Number> T oneOrMore(T value) {
-        if(value.floatValue() < 1) {
+    public static <T extends Number> T oneOrMore(T num) {
+        if(num.floatValue() < 1) {
             throw new IllegalArgumentException("Must be one-or-more");
         }
-        return value;
+        return num;
     }
 
     /**
-     * Checks that the given number is greater-than zero.
+     * Checks that the given number is greater than zero.
      * @param <T> Number type
-     * @param value Value to test
+     * @param num Number
      */
-    public static <T extends Number> T positive(T value) {
-    	if(value.floatValue() <= 0) {
+    public static <T extends Number> T positive(T num) {
+    	if(num.floatValue() <= 0) {
     		throw new IllegalArgumentException("Must be positive and greater-than zero");
     	}
-    	return value;
+    	return num;
     }
 
     /**
      * Checks that the given number is within the specified range.
+     * Note that the {@link max} parameter is <b>inclusive</b>, i.e. whether the given number is less than <b>or equal to</b> the specified maximum.
      * @param <T> Number type
-     * @param value Value to test
+     * @param num Number
      * @param min Minimum
-     * @param max Maximum
-     * @throws IllegalArgumentException if the value is outside of the specified range
+     * @param max Maximum (inclusive)
+     * @throws IllegalArgumentException if the value is not within the specified range
      */
-    public static <T extends Number> T range(T value, T min, T max) throws IllegalArgumentException {
-    	final float f = value.floatValue();
+    public static <T extends Number> T range(T num, T min, T max) {
+    	final float f = num.floatValue();
         if((f < min.floatValue()) || (f > max.floatValue())) {
-            throw new IllegalArgumentException("Value of out range: " + value + "(" + min + ".." + max + ")");
+            throw new IllegalArgumentException(String.format("Value of out range: actual=%d expected=(%s...%d)", num, min, max));
         }
-        return value;
+        return num;
     }
 
 	/**
 	 * Checks that the given floating-point value is a valid 0..1 percentile.
-	 * @param f Value to test
+	 * @param p Percentile
 	 * @throws IllegalArgumentException if the value is not a percentile
 	 */
-	public static float isPercentile(float f) {
-		return range(f, 0f, 1f);
+	public static float isPercentile(float p) {
+		return range(p, 0f, 1f);
 	}
 }

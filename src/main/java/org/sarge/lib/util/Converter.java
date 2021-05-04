@@ -7,19 +7,17 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
- * Converts a string to a data-type.
+ * A <i>converter</i>
+ * @param <T> Converted data-type
  * @author Sarge
- * @param <T> Data-type
  */
 @FunctionalInterface
 public interface Converter<T> extends Function<String, T> {
 	/**
-	 * Convert the given string to this data-type.
+	 * Converts the given string.
 	 * @param str String to convert
-	 * @return Converted data
+	 * @return Converted value
 	 * @throws NumberFormatException if the value cannot be converted
 	 */
 	@Override
@@ -36,7 +34,7 @@ public interface Converter<T> extends Function<String, T> {
 	Converter<Integer> INTEGER = Integer::parseInt;
 
 	/**
-	 * Converts to floating-point.
+	 * Converts to a floating-point number.
 	 */
 	Converter<Float> FLOAT = Float::parseFloat;
 
@@ -49,10 +47,6 @@ public interface Converter<T> extends Function<String, T> {
 	 * Converts to a boolean.
 	 */
 	Converter<Boolean> BOOLEAN = str -> {
-		if(StringUtils.isEmpty(str)) {
-			throw new NumberFormatException("Empty boolean");
-		}
-		else
 		if(str.equalsIgnoreCase("true")) {
 			return true;
 		}
@@ -76,6 +70,16 @@ public interface Converter<T> extends Function<String, T> {
 	 * @param <E> Enumeration
 	 */
 	class EnumerationConverter<E extends Enum<E>> implements Converter<E> {
+		/**
+		 * Generates the <i>name</i> of the given enumeration constant (lower-case, underscores replaced by hyphens).
+		 * @param <E> Enumeration
+		 * @param value Enumeration constant
+		 * @return
+		 */
+		public static <E extends Enum<E>> String name(E value) {
+			return value.name().toLowerCase().replaceAll("_", "-");
+		}
+
 		private final Map<String, E> map;
 
 		/**
@@ -83,11 +87,7 @@ public interface Converter<T> extends Function<String, T> {
 		 * @param clazz Enumeration class
 		 */
 		public EnumerationConverter(Class<E> clazz) {
-			map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(this::name, Function.identity()));
-		}
-
-		private String name(E key) {
-			return key.name().toLowerCase().replaceAll("_", "-");
+			map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(EnumerationConverter::name, Function.identity()));
 		}
 
 		@Override
@@ -99,7 +99,7 @@ public interface Converter<T> extends Function<String, T> {
 	}
 
 	/**
-	 * A <i>table converter</i> is an adapter for a converter with a lookup table of values (case insensitive).
+	 * A <i>table converter</i> is an adapter for a converter with a case insensitive lookup table of values.
 	 * @param <T> Conversion type
 	 */
 	class TableConverter<T> implements Converter<T> {

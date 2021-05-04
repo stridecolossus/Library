@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.sarge.lib.util.Converter.EnumerationConverter;
 import org.sarge.lib.util.Converter.TableConverter;
 
-public class ConverterTest {
+class ConverterTest {
 	@Test
 	void string() {
 		assertEquals("string", Converter.STRING.apply("string"));
@@ -24,7 +24,6 @@ public class ConverterTest {
 	void bool() {
 		assertEquals(Boolean.TRUE, Converter.BOOLEAN.apply("true"));
 		assertEquals(Boolean.FALSE, Converter.BOOLEAN.apply("false"));
-		assertThrows(NumberFormatException.class, () -> Converter.BOOLEAN.apply(null));
 		assertThrows(NumberFormatException.class, () -> Converter.BOOLEAN.apply(""));
 		assertThrows(NumberFormatException.class, () -> Converter.BOOLEAN.apply("cobblers"));
 	}
@@ -39,16 +38,18 @@ public class ConverterTest {
 		assertEquals(1.23f, Converter.FLOAT.apply("1.23"), 0.001f);
 	}
 
+	// TODO - this was local to enumeration() but Eclipse kept removed the first character!
+	enum MockEnum {
+		CONSTANT,
+		CONSTANT_UNDERSCORE
+	}
+
 	@Test
 	void enumeration() {
-		enum Mock {
-			CONSTANT,
-			CONSTANT_UNDERSCORE
-		}
-		final Converter<Mock> converter = new EnumerationConverter<>(Mock.class);
-		assertEquals(Mock.CONSTANT, converter.apply("constant"));
-		assertEquals(Mock.CONSTANT, converter.apply("CONSTANT"));
-		assertEquals(Mock.CONSTANT_UNDERSCORE, converter.apply("constant-underscore"));
+		final Converter<MockEnum> converter = new EnumerationConverter<>(MockEnum.class);
+		assertEquals(MockEnum.CONSTANT, converter.apply("constant"));
+		assertEquals(MockEnum.CONSTANT, converter.apply("CONSTANT"));
+		assertEquals(MockEnum.CONSTANT_UNDERSCORE, converter.apply("constant-underscore"));
 		assertThrows(NumberFormatException.class, () -> converter.apply("cobblers"));
 	}
 
