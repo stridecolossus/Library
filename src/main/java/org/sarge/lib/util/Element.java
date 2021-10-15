@@ -412,16 +412,13 @@ public final class Element {
 
 	@Override
 	public boolean equals(Object obj) {
-		if(obj == this) {
-			return true;
-		}
-
 		return
+				(obj == this) ||
 				(obj instanceof Element that) &&
 				(this.parent == that.parent) &&
 				this.name.equals(that.name) &&
-				Objects.equals(this.text, that.text) &&
-				this.attributes.equals(that.attributes);
+				this.attributes.equals(that.attributes) &&
+				Objects.equals(this.text, that.text);
 	}
 
 	@Override

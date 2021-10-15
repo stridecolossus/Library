@@ -48,7 +48,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	 * Parses a percentile from the given string representation.
 	 * <p>
 	 * A string containing a decimal point is assumed to be a 0..1 floating point value, otherwise it is treated as a 0..100 integer.
-	 *
+	 * <p>
 	 * @param str Percentile as a string
 	 * @return Percentile
 	 */
@@ -169,7 +169,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj instanceof Percentile that) && (Float.floatToIntBits(value) == Float.floatToIntBits(that.value));
+		return (obj == this) || ((obj instanceof Percentile that) && (Float.floatToIntBits(value) == Float.floatToIntBits(that.value)));
 	}
 
 	@Override
