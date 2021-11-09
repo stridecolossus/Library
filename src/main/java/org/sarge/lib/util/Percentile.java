@@ -169,7 +169,10 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 
 	@Override
 	public boolean equals(Object obj) {
-		return (obj == this) || ((obj instanceof Percentile that) && (Float.floatToIntBits(value) == Float.floatToIntBits(that.value)));
+		return
+				(obj == this) ||
+				(obj instanceof Percentile that) &&
+				(Float.floatToIntBits(value) == Float.floatToIntBits(that.value));
 	}
 
 	@Override
