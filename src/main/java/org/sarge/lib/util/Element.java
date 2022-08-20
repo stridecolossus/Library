@@ -1,41 +1,48 @@
 package org.sarge.lib.util;
 
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static org.sarge.lib.util.Check.notEmpty;
-import static org.sarge.lib.util.Check.notNull;
+import static java.util.stream.Collectors.*;
+import static org.sarge.lib.util.Check.*;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-
 /**
- * An <i>element</i> is a node in an XML document.
+ * An <i>element</i> is a node tree used to represent compound document types such as XML and YAML.
+ * <p>
+ * Each element in the tree is comprised of:
+ * <ul>
+ * <li>the element name</li>
+ * <li>optional text content</li>
+ * <li>none-or-more attributes</li>
+ * <li>none-or-more children</li>
+ * </ul>
+ * <p>
+ * The {@link Builder} provides a fluid interface to construct a document:
+ * <p>
+ * <pre>
+ * Element element = new Element.Builder()
+ *     .name("parent")
+ *     .attribute("attribute", "value")
+ *     .text("text")
+ *     .child()
+ *         .name("child")
+ *         .end()
+ *     .build();
+ * </pre>
+ * <p>
+ * An {@link ElementException} can be used to indicate an application error when processing an element:
+ * <p>
+ * <pre>
+ * throw element.new ElementException(...);
+ * </pre>
+ * <p>
  * @author Sarge
  */
 public final class Element {
 	/**
 	 * Creates a root element with the given name.
-	 * @param name Root name
+	 * @param name Root element name
 	 * @return Root element
 	 */
 	public static Element of(String name) {
@@ -50,31 +57,74 @@ public final class Element {
 
 	/**
 	 * Constructor.
-	 * @param name 				Element name
-	 * @param attributes		Attributes
-	 * @param text				Optional text content
+	 * @param name				Element name
+	 * @param attributes		Attributes indexed by name
+	 * @param text				Text content or the empty string if none
 	 */
-	private Element(String name, Map<String, String> attributes, String text) {
+	public Element(String name, Map<String, String> attributes, String text) {
 		this.name = notEmpty(name);
 		this.attributes = Map.copyOf(attributes);
-		this.text = text;
+		this.text = text == null ? "" : text; // TODO
 	}
 
 	/**
-	 * TODO
-	 * @param parent
+	 * Sets the parent of this element.
+	 * @param parent Parent element
+	 * @throws IllegalStateException if this element already has a parent
 	 */
-	private void link(Element parent) {
-		assert this.parent == null;
+	private void parent(Element parent) {
+		if(this.parent != null) throw new IllegalStateException("Element already has a parent: " + this);
 		this.parent = notNull(parent);
 		parent.children.add(this);
 	}
 
 	/**
-	 * @return Name of this element
+	 * @return Element name
 	 */
 	public String name() {
 		return name;
+	}
+
+	/**
+	 * @return Whether this is an empty element with no children or attributes
+	 */
+	public boolean isEmpty() {
+		return children.isEmpty() && attributes.isEmpty();
+	}
+
+	/**
+	 * @return Attributes indexed by name
+	 */
+	public Map<String, String> attributes() {
+		return attributes;
+	}
+
+	/**
+	 * Retrieves an optional attribute.
+	 * @param name Attribute name
+	 * @return Attribute value
+	 */
+	public Optional<String> optional(String name) {
+		return Optional.ofNullable(attributes.get(name));
+	}
+
+	/**
+	 * Retrieves a mandatory attribute.
+	 * @param name Attribute name
+	 * @return Attribute value
+	 * @throws ElementException if the attribute is not present
+	 */
+	public String attribute(String name) {
+		final String attr = attributes.get(name);
+		if(attr == null) throw new ElementException("Expected attribute: " + name);
+		return attr;
+	}
+
+	/**
+	 * @return Text content or the empty string if none
+	 */
+	public String text() {
+		return text;
 	}
 
 	/**
@@ -85,329 +135,129 @@ public final class Element {
 	}
 
 	/**
-	 * @return Whether this is a root element
+	 * @return Number of children
 	 */
-	public boolean isRoot() {
-		return parent == null;
-	}
-
-	/**
-	 * @return Sibling index or zero if this element has no siblings
-	 */
-	public int index() {
-		// Check for root or single element
-		if((parent == null) || (parent.children.size() == 1)) {
-			return 0;
-		}
-
-		// Check for single sibling
-		final List<Element> siblings = parent.children(name).collect(toList());
-		if(siblings.size() == 1) {
-			return 0;
-		}
-
-		// Otherwise determine sibling index (by reference not equality)
-		for(int n = 0; n < siblings.size(); ++n) {
-			if(siblings.get(n) == this) {
-				return n;
-			}
-		}
-		throw new RuntimeException();
-	}
-
-	/**
-	 * @return Path from this element to the document root
-	 */
-	public Stream<Element> path() {
-		return Stream.iterate(this, Objects::nonNull, e -> e.parent);
-	}
-
-	/**
-	 * @return Number of children of this element
-	 */
-	public int count() {
+	public int size() {
 		return children.size();
 	}
 
 	/**
-	 * @return Child elements
+	 * @return Children of this element
 	 */
 	public Stream<Element> children() {
 		return children.stream();
 	}
 
 	/**
-	 * Helper - Retrieves the children of this element with the given name (case insensitive).
-	 * @param name Name
-	 * @return Children
+	 * Convenience accessor for the children of this element with the given name.
+	 * @param name Child name
+	 * @return Children with the given name
 	 */
 	public Stream<Element> children(String name) {
-		return children.stream().filter(e -> e.name.equalsIgnoreCase(name));
+		return children.stream().filter(e -> e.name.equals(name));
 	}
 
 	/**
-	 * Retrieves a child element.
-	 * @param name Element name (case insensitive)
+	 * Optionally retrieves the <b>first</b> child element.
 	 * @return Child element
-	 * @throws ElementException if the child does not exist
 	 */
-	public Element child(String name) {
-		return optional(name).orElseThrow(() -> exception(String.format("Child element [%s] not present", name)));
+	public Optional<Element> child() {
+		if(children.isEmpty()) {
+			return Optional.empty();
+		}
+		else {
+			return Optional.of(children.get(0));
+		}
 	}
 
 	/**
-	 * Retrieves an optional child element.
-	 * @param name child element name (case insensitive)
+	 * Optionally retrieves the <b>first</b> child element with the given name.
+	 * @param name Child element name
 	 * @return Child element
 	 */
-	public Optional<Element> optional(String name) {
-		return children.stream().filter(e -> e.name.equalsIgnoreCase(name)).findAny();
+	public Optional<Element> child(String name) {
+		return children(name).findFirst();
 	}
 
 	/**
-	 * Retrieves the <b>single</b> child of this element.
+	 * Retrieves the <b>first</b> child element with the given name.
+	 * @param name Child element name
 	 * @return Child element
-	 * @throws ElementException if this element does not have exactly one child
+	 * @throws ElementException if the child is not present
 	 */
-	public Element child() {
-		if(children.size() != 1) throw exception("Expected exactly one child element");
+	public Element first(String name) {
+		return child(name).orElseThrow(() -> new ElementException("Expected child element: " + name));
+	}
+
+	/**
+	 * Retrieves the <b>first</b> child element.
+	 * @return Child element
+	 * @throws ElementException if a child is not present
+	 */
+	public Element first() {
+		if(children.isEmpty()) throw new ElementException("Expected a child element");
 		return children.get(0);
 	}
 
 	/**
-	 * @return Element attributes ordered by name
+	 * The <i>index</i> of an element is the <i>position</i> of this element with respect to its siblings (starting at one), where a <i>sibling</i> is an element with the same name.
+	 * A root element or a single child element therefore has an index of one.
+	 * @return Index of this element
 	 */
-	public Map<String, String> attributes() {
-		return attributes;
+	public int index() {
+		// Skip if no siblings
+		if(parent == null) {
+			return 1;
+		}
+
+		// Determine sibling index
+		int index = 1;
+		for(final Element sibling : parent.children) {
+			if(sibling == this) {
+				return index;
+			}
+			if(sibling.name.equals(this.name)) {
+				++index;
+			}
+		}
+		throw new RuntimeException();
 	}
 
 	/**
-	 * Retrieves an attribute.
-	 * @param name Attribute name
-	 * @return Attribute
+	 * @return Path from this element to the root
 	 */
-	public Optional<String> attribute(String name) {
-		return Optional.ofNullable(attributes.get(name));
+	public List<Element> path() {
+		final List<Element> path = Stream
+				.iterate(this, Objects::nonNull, e -> e.parent)
+				.collect(toCollection(LinkedList::new));
+
+		Collections.reverse(path);
+
+		return path;
 	}
 
 	/**
-	 * Helper - Retrieves an optional boolean attribute.
-	 * @param name		Boolean attribute name
-	 * @param def		Default value
-	 * @return Boolean attribute
+	 * Applies the given mapping function to this element.
+	 * @param <T> Mapped type
+	 * @param mapper Mapping function
+	 * @return Mapped value
 	 */
-	public boolean attribute(String name, boolean def) {
-		return attribute(name).map(Converter.BOOLEAN).orElse(def);
-	}
-
-	/**
-	 * @return Text content of this element or {@code null} if none
-	 */
-	public String text() {
-		return text;
-	}
-
-	/**
-	 * @param name Child element name
-	 * @return Text content of the given child element or {@code null} if none
-	 * @throws ElementException if the child does not exist
-	 */
-	public String text(String name) {
-		return child(name).text();
-	}
-
-	/**
-	 * @return Optional text content of this element
-	 */
-	public Optional<String> content() {
-		return Optional.ofNullable(text);
-	}
-
-	/**
-	 * @param name Child element name
-	 * @return Optional text content of the given child (if present)
-	 */
-	public Optional<String> content(String name) {
-		return optional(name).flatMap(Element::content);
-	}
-
-	/**
-	 * Helper - Maps this element.
-	 * @param <R> Resultant type
-	 * @param mapper Mapper
-	 * @return Result
-	 */
-	public <R> R map(Function<Element, R> mapper) {
+	public <T> T map(Function<Element, T> mapper) {
 		return mapper.apply(this);
 	}
 
 	/**
-	 * An <i>element handler</i> is a consumer for an element.
-	 */
-	public interface Handler extends Consumer<Element> {
-		/**
-		 * Delegates this handler to the children of the element.
-		 * @return Children handler
-		 */
-		default Handler children() {
-			return xml -> xml.children.forEach(this);
-		}
-
-		/**
-		 * Creates an element handler that first applies the given converter to the text of the element.
-		 * @param <T> Transformed type
-		 * @param converter		Element text converter
-		 * @param consumer		Consumer
-		 * @return Conversion handler
-		 */
-		static <T> Handler of(Converter<T> converter, Consumer<T> consumer) {
-			return xml -> consumer.accept(converter.apply(xml.text));
-		}
-
-		/**
-		 * Creates an element handler for the given transform.
-		 * @param <T> Transformed type
-		 * @param transformer	Element transformer
-		 * @param consumer		Consumer
-		 * @return Transform handler
-		 */
-		static <T> Handler of(Function<Element, T> transformer, Consumer<T> consumer) {
-			return xml -> consumer.accept(transformer.apply(xml));
-		}
-
-		/**
-		 * Creates an element handler that accepts the text of the element.
-		 * @param consumer Element text consumer
-		 * @return Element text handler
-		 */
-		static <T> Handler of(Consumer<String> consumer) {
-			return xml -> consumer.accept(xml.text);
-		}
-
-		/**
-		 * An <i>index handler</i> delegates an element to a handler by name.
-		 */
-		class Index implements Handler {
-			private final Function<String, Handler> mapper;
-			private final Handler def;
-
-			/**
-			 * Constructor.
-			 * @param mapper		Maps the element to a handler
-			 * @param def			Optional default handler
-			 */
-			public Index(Function<String, Handler> mapper, Handler def) {
-				this.mapper = notNull(mapper);
-				this.def = def;
-			}
-
-			@Override
-			public void accept(Element xml) {
-				final Handler delegate = mapper.apply(xml.name);
-				if(delegate == null) {
-					if(def == null) throw xml.exception("No handler for element");
-					def.accept(xml);
-				}
-				else {
-					delegate.accept(xml);
-				}
-			}
-		}
-	}
-
-	/**
-	 * An <i>element exception</i> indicates an XML processing exception thrown by the application.
-	 * <p>
-	 * The exception message is decorated with an XPath-like string representing the location of this element within the document.
-	 * <p>
-	 * @see Element#path()
-	 * @see Element#index()
-	 */
-	public class ElementException extends RuntimeException {
-		/**
-		 * Constructor.
-		 * @param message		Message
-		 * @param cause			Root cause
-		 */
-		public ElementException(String message, Throwable cause) {
-			super(message, cause);
-		}
-
-		/**
-		 * Constructor.
-		 * @param cause Root cause
-		 */
-		public ElementException(Throwable cause) {
-			super(cause);
-		}
-
-		/**
-		 * Constructor.
-		 * @param message Message
-		 */
-		public ElementException(String message) {
-			super(message);
-		}
-
-		/**
-		 * @return Element on which the exception was raised
-		 */
-		public Element element() {
-			return Element.this;
-		}
-
-		@Override
-		public String getMessage() {
-			// Build path
-			final var path = path().collect(toList());
-			Collections.reverse(path);
-
-			// Convert to indexed path string
-			final String str = path.stream().map(this::name).collect(joining("/"));
-
-			// Build message
-			return new StringBuilder()
-					.append(super.getMessage())
-					.append(" at /")
-					.append(str)
-					.toString();
-		}
-
-		/**
-		 * @return Name of the given element within the path
-		 */
-		private String name(Element e) {
-			final int index = e.index();
-			if(index == 0) {
-				return e.name;
-			}
-			else {
-				return String.format("%s[%d]", e.name, index + 1);
-			}
-		}
-	}
-
-	/**
-	 * Helper - Creates an XML exception at this element.
-	 * @param message Message
-	 * @return New XML exception
+	 * Convenience method to create an exception on this element.
+	 * @param message Exception message
+	 * @return New element exception
 	 */
 	public ElementException exception(String message) {
 		return new ElementException(message);
 	}
 
-	/**
-	 * Helper - Wraps an exception at this element.
-	 * @param e Exception
-	 * @return New XML exception
-	 */
-	public ElementException exception(Exception e) {
-		return new ElementException(e);
-	}
-
 	@Override
 	public int hashCode() {
-		return Objects.hash(name, parent, text, attributes);
+		return Objects.hash(name, attributes, text, children, parent);
 	}
 
 	@Override
@@ -415,10 +265,11 @@ public final class Element {
 		return
 				(obj == this) ||
 				(obj instanceof Element that) &&
-				(this.parent == that.parent) &&
 				this.name.equals(that.name) &&
+//				(this.parent == that.parent) &&
+				Objects.equals(this.text, that.text) &&
 				this.attributes.equals(that.attributes) &&
-				Objects.equals(this.text, that.text);
+				this.children.equals(that.children);
 	}
 
 	@Override
@@ -427,29 +278,66 @@ public final class Element {
 	}
 
 	/**
-	 * Builder for an XML element.
+	 * An <i>element exception</i> indicates a processing exception thrown by the application.
+	 * <p>
+	 * The exception message is decorated with an XPath-like string representing the location of this element within the document.
+	 * <p>
+	 * @see Element#index()
+	 */
+	public class ElementException extends RuntimeException {
+		/**
+		 * Constructor.
+		 * @param message 		Exception message
+		 * @param cause			Optional cause
+		 */
+		public ElementException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		/**
+		 * Constructor.
+		 * @param message Exception message
+		 */
+		public ElementException(String message) {
+			super(message);
+		}
+
+		@Override
+		public String getMessage() {
+			final String path = path()
+					.stream()
+					.map(this::name)
+					.collect(joining("/"));
+
+			return String.format("%s at /%s", super.getMessage(), path);
+		}
+
+		/**
+		 * @return Name of the given element decorated with the sibling index
+		 */
+		private String name(Element e) {
+			final int index = e.index();
+			if(index == 1) {
+				return e.name;
+			}
+			else {
+				return String.format("%s[%d]", e.name, index);
+			}
+		}
+	}
+
+	/**
+	 * Builder for an element.
 	 */
 	public static class Builder {
-		private String name = "xml";
-		private String text;
+		// Element properties
+		private String name;
 		private final Map<String, String> attributes = new HashMap<>();
+		private String text;
+
+		// Tree
 		private final List<Element> children = new ArrayList<>();
-		private final Builder parent;
-
-		/**
-		 * Default constructor.
-		 */
-		public Builder() {
-			this(null);
-		}
-
-		/**
-		 * Constructor for a child.
-		 * @param parent Parent builder
-		 */
-		private Builder(Builder parent) {
-			this.parent = parent;
-		}
+		private Builder parent;
 
 		/**
 		 * Sets the name of this element.
@@ -461,14 +349,13 @@ public final class Element {
 		}
 
 		/**
-		 * Adds an attribute.
-		 * @param name		Attribute name
+		 * Adds an attribute to this element.
+		 * @param name 		Attribute name
 		 * @param value		Value
 		 */
 		public Builder attribute(String name, Object value) {
 			Check.notEmpty(name);
-			Check.notNull(value);
-			attributes.put(name, String.valueOf(value));
+			attributes.put(name, value.toString());
 			return this;
 		}
 
@@ -477,166 +364,104 @@ public final class Element {
 		 * @param text Text content
 		 */
 		public Builder text(String text) {
-			this.text = notNull(text);
+			this.text = notEmpty(text);
 			return this;
 		}
 
 		/**
-		 * Helper - Adds a child element with the given text.
-		 * @param name Child element name
-		 * @param text Child Text content
-		 */
-		public Builder child(String name, Object text) {
-			final Element child = new Element.Builder().name(name).text(String.valueOf(text)).build();
-			children.add(child);
-			return this;
-		}
-
-		/**
-		 * Starts a child element.
-		 * @return New builder
-		 * @see #end()
+		 * Starts a new builder for a child of this element.
+		 * @return New child element builder
 		 */
 		public Builder child() {
-			return new Builder(this);
+			final Builder child = new Builder();
+			child.parent = this;
+			return child;
 		}
 
 		/**
-		 * Adds an existing element as a child.
-		 * @param child Child element
-		 * @throws IllegalStateException if the given child already has a parent
+		 * Attaches an existing element as a child of this element.
+		 * @param child Child element to attach
 		 */
 		public Builder child(Element child) {
-			if(child.parent != null) throw new IllegalStateException("Child already has a parent: " + child);
-			children.add(child);
+			children.add(notNull(child));
 			return this;
 		}
 
 		/**
-		 * Completes this child element.
+		 * Helper - Attaches a child element with the given text content.
+		 * @param name		Child element name
+		 * @param text		Text content
+		 */
+		public Builder child(String name, String text) {
+			final Element child = new Builder().name(name).text(text).build();
+			return child(child);
+		}
+
+		/**
+		 * Constructs this child element and returns control to the parent builder.
 		 * @return Parent builder
-		 * @throws IllegalStateException if this is not a child
+		 * @throws IllegalStateException if this is not a builder for a child element
 		 */
 		public Builder end() {
-			// Check this is a child element
-			if(parent == null) throw new IllegalStateException("Cannot end a root element");
+			if(parent == null) throw new IllegalStateException("Not a child element builder");
 
-			// Attach child
-			final Element child = buildLocal();
+			// Construct this child element and attach to parent
+			final Element child = create();
 			parent.children.add(child);
 
-			// Return to parent builder
-			return parent;
+			// Return control to parent builder
+			try {
+				return parent;
+			}
+			finally {
+				parent = null;
+			}
 		}
 
 		/**
 		 * Constructs this element.
 		 * @return New element
-		 * @throws IllegalStateException if this is a child element
+		 * @throws IllegalStateException if this is a builder for a child element
+		 * @see #end()
 		 */
 		public Element build() {
 			if(parent != null) throw new IllegalStateException("Cannot build a child element");
-			return buildLocal();
+
+			if(name == null) {
+				return empty(children);
+			}
+			else {
+				return create();
+			}
+		}
+
+		/**
+		 * Invoked if the name of this element has not been populated.
+		 * <p>
+		 * This method can be overridden to handle use-cases where the root element may be optional.
+		 * <p>
+		 * @param children Children elements
+		 * @return New element
+		 */
+		protected Element empty(List<Element> children) {
+			name("root");
+			return create();
 		}
 
 		/**
 		 * Constructs this element and links its children.
+		 * @return New element
 		 */
-		private Element buildLocal() {
+		protected Element create() {
+			// Construct element
 			final Element element = new Element(name, attributes, text);
-			children.forEach(e -> e.link(element));
+
+			// Attach children
+			for(final Element e : children) {
+				e.parent(element);
+			}
+
 			return element;
-		}
-	}
-
-	/**
-	 * Loader for an XML document.
-	 */
-	public static class Loader {
-		private static final DocumentBuilderFactory FACTORY = DocumentBuilderFactory.newInstance();
-
-		/**
-		 * @throws RuntimeException if the underlying XML parser cannot be instantiated
-		 */
-		public static DocumentBuilder parser() {
-			try {
-				return FACTORY.newDocumentBuilder();
-			}
-			catch(Exception e) {
-				throw new RuntimeException("Error creating XML document parser", e);
-			}
-		}
-
-		private final DocumentBuilder parser = parser();
-
-		/**
-		 * Loads an XML document.
-		 * @param r XML reader
-		 * @return Root element
-		 * @throws IOException if the XML cannot be loaded
-		 */
-		public Element load(Reader r) throws IOException {
-			// Load document
-			Document doc;
-			try {
-				doc = parser.parse(new InputSource(r));
-			}
-			catch(SAXException e) {
-				throw new IOException("Error parsing XML document", e);
-			}
-
-			// Load XML tree
-			final Builder root = new Builder();
-			final var tree = load(doc.getDocumentElement(), root);
-			tree.forEach(Builder::end);
-
-			// Extract root element
-			return root.children.get(0);
-		}
-
-		/**
-		 * Recursively loads a document.
-		 * @param node 			Node
-		 * @param builder		Builder
-		 * @return Element builder
-		 */
-		private Stream<Builder> load(Node node, Builder parent) {
-			// Init element
-			final Builder builder = new Builder(parent);
-			builder.name(node.getNodeName());
-
-			// Load attributes
-			final NamedNodeMap map = node.getAttributes();
-			final int len = map.getLength();
-			for(int n = 0; n < len; ++n) {
-				final Node attr = map.item(n);
-				builder.attribute(attr.getNodeName(), attr.getNodeValue());
-			}
-
-			// Process text and children nodes
-			final NodeList nodes = node.getChildNodes();
-			final int count = nodes.getLength();
-			final List<Node> children = new ArrayList<>(count / 2);		// Children should be roughly half of the nodes
-			for(int n = 0; n < count; ++n) {
-				final Node child = nodes.item(n);
-				switch(child.getNodeType()) {
-					case Node.ELEMENT_NODE -> {
-						// Add child element
-						children.add(child);
-					}
-
-					case Node.TEXT_NODE -> {
-						// Load text content
-						final String text = child.getNodeValue().trim();
-						if(!text.isEmpty()) {
-							builder.text(text);
-						}
-					}
-				}
-			}
-
-			// Recurse depth-first to children
-			return Stream.concat(children.stream().flatMap(e -> load(e, builder)), Stream.of(builder));
 		}
 	}
 }

@@ -2,8 +2,8 @@ package org.sarge.lib.util;
 
 /**
  * A <i>percentile</i> represents a percentage numeric.
- * @author Sarge
  * @see Check#isPercentile(float)
+ * @author Sarge
  */
 public final class Percentile extends Number implements Comparable<Percentile> {
 	/**
@@ -42,6 +42,16 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	 */
 	public static Percentile of(int value) {
 		return INTEGERS[value];
+	}
+
+	/**
+	 * Creates a percentile expressed as a range.
+	 * @param value		Value
+	 * @param max		Maximum value
+	 * @return Ranged percentile, i.e. {@link #value} divided by {@link #max}
+	 */
+	public static Percentile of(float value, float max) {
+		return new Percentile(value / max);
 	}
 
 	/**
@@ -160,6 +170,14 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 		else {
 			return new Percentile(this.value * p.value);
 		}
+	}
+
+	/**
+	 * Inverts this percentile.
+	 * @return Inverted percentile
+	 */
+	public Percentile invert() {
+		return new Percentile(1 - value);
 	}
 
 	@Override

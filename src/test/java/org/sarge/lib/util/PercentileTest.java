@@ -1,10 +1,8 @@
 package org.sarge.lib.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 public class PercentileTest {
 	@Test
@@ -22,6 +20,13 @@ public class PercentileTest {
 	void constructorInvalidRange() {
 		assertThrows(IllegalArgumentException.class, () -> new Percentile(-1f));
 		assertThrows(IllegalArgumentException.class, () -> new Percentile(2f));
+	}
+
+	@Test
+	void range() {
+		assertEquals(Percentile.ZERO, Percentile.of(0, 2));
+		assertEquals(Percentile.HALF, Percentile.of(1, 2));
+		assertEquals(Percentile.ONE, Percentile.of(2, 2));
 	}
 
 	@Test
@@ -124,6 +129,13 @@ public class PercentileTest {
 		assertEquals(Percentile.ZERO, Percentile.ZERO.multiply(Percentile.ZERO));
 		assertEquals(Percentile.ZERO, Percentile.ONE.multiply(Percentile.ZERO));
 		assertEquals(Percentile.ZERO, Percentile.ZERO.multiply(Percentile.ONE));
+	}
+
+	@Test
+	void invert() {
+		assertEquals(Percentile.ONE, Percentile.ZERO.invert());
+		assertEquals(Percentile.HALF, Percentile.HALF.invert());
+		assertEquals(Percentile.ZERO, Percentile.ONE.invert());
 	}
 
 	@Test

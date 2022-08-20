@@ -1,10 +1,8 @@
 package org.sarge.lib.util;
 
 import static java.util.stream.Collectors.toMap;
-import static org.sarge.lib.util.Check.notNull;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -24,24 +22,9 @@ public interface Converter<T> extends Function<String, T> {
 	T apply(String str) throws NumberFormatException;
 
 	/**
-	 * Converts to an string (i.e. does nothing).
+	 * Identity converter.
 	 */
-    Converter<String> STRING = str -> str;
-
-	/**
-	 * Converts to an integer.
-	 */
-	Converter<Integer> INTEGER = Integer::parseInt;
-
-	/**
-	 * Converts to a floating-point number.
-	 */
-	Converter<Float> FLOAT = Float::parseFloat;
-
-	/**
-	 * Converts to a long.
-	 */
-	Converter<Long> LONG = Long::parseLong;
+	Converter<String> IDENTITY = str -> str;
 
 	/**
 	 * Converts to a boolean.
@@ -60,71 +43,49 @@ public interface Converter<T> extends Function<String, T> {
 	};
 
 	/**
-	 * An <i>enumeration converter</i> maps a string value to an enumeration.
-	 * <p>
-	 * Notes:
-	 * <ul>
-	 * <li>comparisons are case-insensitive</i>
-	 * <li>enumeration constants have hyphens replacing any underscores</li>
-	 * </ul>
+	 * Creates a converter for the given enumeration.
 	 * @param <E> Enumeration
+	 * @param clazz Enumeration class
+	 * @return Enumeration converter
 	 */
-	class EnumerationConverter<E extends Enum<E>> implements Converter<E> {
-		/**
-		 * Generates the <i>name</i> of the given enumeration constant (lower-case, underscores replaced by hyphens).
-		 * @param <E> Enumeration
-		 * @param value Enumeration constant
-		 * @return
-		 */
-		public static <E extends Enum<E>> String name(E value) {
-			return value.name().toLowerCase().replaceAll("_", "-");
-		}
+	static <E extends Enum<E>> Converter<E> of(Class<E> clazz) {
+		final var map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(Converter::constant, Function.identity()));
 
-		private final Map<String, E> map;
-
-		/**
-		 * Constructor.
-		 * @param clazz Enumeration class
-		 */
-		public EnumerationConverter(Class<E> clazz) {
-			map = Arrays.stream(clazz.getEnumConstants()).collect(toMap(EnumerationConverter::name, Function.identity()));
-		}
-
-		@Override
-		public E apply(String str) throws NumberFormatException {
+		return str -> {
 			final E result = map.get(str.toLowerCase());
 			if(result == null) throw new NumberFormatException("Unknown enumeration constant: " + str);
 			return result;
-		}
+		};
 	}
 
 	/**
-	 * A <i>table converter</i> is an adapter for a converter with a case insensitive lookup table of values.
-	 * @param <T> Conversion type
+	 * Generates the <i>standardised</i> name of the given enumeration constant.
+	 * The result is lower-case with underscores replaced by hyphens.
+	 * @param e Enumeration constant
+	 * @return Enumeration constant name
 	 */
-	class TableConverter<T> implements Converter<T> {
-		private final Map<String, T> table;
-		private final Converter<T> converter;
+	private static String constant(Enum<?> e) {
+		return e.name().toLowerCase().replaceAll("_", "-");
+	}
 
-		/**
-		 * Constructor.
-		 * @param table				Table
-		 * @param converter			Delegate converter
-		 */
-		public TableConverter(Map<String, T> table, Converter<T> converter) {
-			this.table = Map.copyOf(table);
-			this.converter = notNull(converter);
-		}
+	/**
+	 * Creates an adapter for a converter that first attempts to lookup a value from the given table.
+	 * @param <T> Converted type
+	 * @param table			Lookup table
+	 * @param converter		Converter
+	 * @return Table converter
+	 */
+	static <T> Converter<T> of(Map<String, T> table, Converter<T> converter) {
+		final var copy = Map.copyOf(table);
 
-		@Override
-		public T apply(String str) throws NumberFormatException {
-			final T value = table.get(str.toLowerCase());
+		return str -> {
+			final T value = copy.get(str);
 			if(value == null) {
 				return converter.apply(str);
 			}
 			else {
 				return value;
 			}
-		}
+		};
 	}
 }

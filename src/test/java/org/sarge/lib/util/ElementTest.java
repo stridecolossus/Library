@@ -1,430 +1,304 @@
 package org.sarge.lib.util;
 
-import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.*;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.sarge.lib.util.Element.ElementException;
-import org.sarge.lib.util.Element.Handler;
-import org.sarge.lib.util.Element.Handler.Index;
 
 public class ElementTest {
-	private static final String XML = "xml";
-	private static final String CHILD = "child";
-	private static final String TEXT = "text";
-	private static final String ATTRIBUTE = "attribute";
-	private static final String UNKNOWN = "cobblers";
+	@DisplayName("A simple element...")
+	@Nested
+	class Simple {
+		private Element element;
 
-	private Element xml;
+		@BeforeEach
+		void before() {
+			element = Element.of("name");
+		}
 
-	@BeforeEach
-	void before() {
-		xml = new Element.Builder()
-				.attribute(ATTRIBUTE, true)
-				.text(TEXT)
-				.build();
+		@DisplayName("can be constructed")
+		@Test
+		void constructor() {
+			assertNotNull(element);
+			assertEquals("name", element.name());
+		}
+
+		@DisplayName("has no attributes")
+		@Test
+		void attributes() {
+			assertEquals(Map.of(), element.attributes());
+			assertEquals(Optional.empty(), element.optional("whatever"));
+		}
+
+		@DisplayName("has empty text content")
+		@Test
+		void text() {
+			assertEquals("", element.text());
+		}
+
+		@DisplayName("has an implicit index of one")
+		@Test
+		void index() {
+			assertEquals(1, element.index());
+		}
+
+		@DisplayName("has no parent")
+		@Test
+		void parent() {
+			assertEquals(Optional.empty(), element.parent());
+		}
+
+		@DisplayName("has a path consisting of itself")
+		@Test
+		void path() {
+			assertNotNull(element.path());
+			assertEquals(List.of(element), element.path());
+		}
+
+		@DisplayName("has no children")
+		@Test
+		void children() {
+			assertEquals(0, element.size());
+			assertNotNull(element.children());
+			assertEquals(List.of(), element.children().toList());
+			assertEquals(List.of(), element.children("whatever").toList());
+			assertEquals(Optional.empty(), element.child("whatever"));
+		}
+
+		@DisplayName("can be mapped by a transform function")
+		@Test
+		void map() {
+			assertEquals("name", element.map(Element::name));
+		}
+
+		@DisplayName("can raise an exception")
+		@Test
+		void exception() {
+			final var e = element.new ElementException("doh");
+			assertEquals("doh at /name", e.getMessage());
+		}
 	}
 
-	@Test
-	void constructor() {
-		assertEquals(XML, xml.name());
-		assertEquals(TEXT, xml.text());
-		assertNotNull(xml.attributes());
-		assertEquals(Optional.empty(), xml.parent());
-		assertEquals(true, xml.isRoot());
-		assertEquals(0, xml.index());
+	@DisplayName("An element attribute...")
+	@Nested
+	class Attributes {
+		private Element element;
+
+		@BeforeEach
+		void before() {
+			element = new Element("name", Map.of("key", "value"), "");
+		}
+
+		@DisplayName("can be queried from the element")
+		@Test
+		void attributes() {
+			assertEquals(Map.of("key", "value"), element.attributes());
+			assertEquals(Optional.of("value"), element.optional("key"));
+			assertEquals("value", element.attribute("key"));
+		}
+
+		@DisplayName("can be optional")
+		@Test
+		void optional() {
+			assertEquals(Optional.empty(), element.optional("whatever"));
+		}
+
+		@DisplayName("can be mandatory")
+		@Test
+		void mandatory() {
+			assertThrows(ElementException.class, () -> element.attribute("whatever"));
+		}
 	}
 
+	@DisplayName("An element can contain text content")
 	@Test
-	void path() {
-		assertNotNull(xml.path());
-		assertArrayEquals(new Element[]{xml}, xml.path().toArray());
-	}
-
-	@Test
-	void map() {
-		@SuppressWarnings("unchecked")
-		final Function<Element, Object> function = mock(Function.class);
-		xml.map(function);
-		verify(function).apply(xml);
+	void text() {
+		final Element element = new Element("name", Map.of(), "text");
+		assertEquals("text", element.text());
 	}
 
 	@Test
 	void equals() {
-		assertEquals(true, xml.equals(xml));
-		assertEquals(false, xml.equals(null));
-		assertEquals(false, xml.equals(Element.of("other")));
+		final Element element = new Element("name", Map.of("key", "value"), "text");
+		assertEquals(element, element);
+		assertEquals(element, new Element("name", Map.of("key", "value"), "text"));
+		assertNotEquals(element, null);
+		assertNotEquals(element, Element.of("whatever"));
 	}
 
+	@DisplayName("A single child element...")
 	@Nested
-	class ChildrenTests {
-		private Element parent, child, sibling;
-
-		@BeforeEach
-		void before() {
-			child = Element.of(CHILD);
-			sibling = Element.of(CHILD);
-			parent = new Element.Builder().child(child).child(sibling).build();
-		}
-
-		@Test
-		void constructor() {
-			assertEquals(Optional.of(parent), child.parent());
-		}
-
-		@Test
-		void count() {
-			assertEquals(2, parent.count());
-			assertEquals(0, child.count());
-		}
-
-		@Test
-		void children() {
-			assertArrayEquals(new Element[]{child, sibling}, parent.children().toArray());
-			assertArrayEquals(new Element[]{child, sibling}, parent.children(CHILD).toArray());
-			assertEquals(0, parent.children(UNKNOWN).count());
-		}
-
-		@Test
-		void index() {
-			assertEquals(0, child.index());
-			assertEquals(1, sibling.index());
-		}
-
-		@DisplayName("Cannot retrieve an unknown child element")
-		@Test
-		void childNotPresent() {
-			assertThrows(ElementException.class, () -> parent.child(UNKNOWN));
-		}
-
-		@DisplayName("Retrieve an optional child element")
-		@Test
-		void optional() {
-			assertEquals(Optional.of(child), parent.optional(CHILD));
-		}
-
-		@DisplayName("Retrieve an empty optional child element")
-		@Test
-		void optionalNotPresent() {
-			assertEquals(Optional.empty(), parent.optional(UNKNOWN));
-		}
-
-		@DisplayName("Retrieve a single child by name")
-		@Test
-		void child() {
-			child = Element.of(CHILD);
-			parent = new Element.Builder().child(child).build();
-			assertEquals(child, parent.child());
-			assertEquals(child, parent.child(CHILD));
-		}
-
-		@DisplayName("Cannot retrieve a single child if the parent has multiple children with the same name")
-		@Test
-		void childMultiple() {
-			assertThrows(ElementException.class, () -> parent.child());
-		}
-	}
-
-	@Nested
-	class ContentTests {
-		private Element parent, child;
-
-		@BeforeEach
-		void before() {
-			parent = new Element.Builder().child(CHILD, TEXT).build();
-			child = parent.child(CHILD);
-		}
-
-		@Test
-		void text() {
-			assertEquals(TEXT, parent.text(CHILD));
-		}
-
-		@DisplayName("Cannot retrieve the text of unknown child element")
-		@Test
-		void empty() {
-			assertThrows(ElementException.class, () -> parent.text(UNKNOWN));
-		}
-
-		@DisplayName("Retrieve the text content of an element")
-		@Test
-		void content() {
-			assertEquals(Optional.of(TEXT), child.content());
-			assertEquals(Optional.of(TEXT), parent.content(CHILD));
-		}
-
-		@DisplayName("Retrieve the empty text content of an unknown element")
-		@Test
-		void contentEmpty() {
-			assertEquals(Optional.empty(), parent.content());
-			assertEquals(Optional.empty(), parent.content(UNKNOWN));
-		}
-	}
-
-	@Nested
-	class AttributeTests {
-		@Test
-		void attributes() {
-			assertEquals(Map.of(ATTRIBUTE, "true"), xml.attributes());
-			assertEquals(Optional.of("true"), xml.attribute(ATTRIBUTE));
-		}
-
-		@Test
-		void empty() {
-			assertEquals(Map.of(), Element.of("empty").attributes());
-		}
-
-		@DisplayName("Retrieve a boolean attribute")
-		@Test
-		void bool() {
-			assertEquals(true, xml.attribute(ATTRIBUTE, false));
-			assertEquals(false, xml.attribute(UNKNOWN, false));
-			assertEquals(true, xml.attribute(UNKNOWN, true));
-		}
-
-		@DisplayName("Retrieve an empty attribute")
-		@Test
-		void attributeNotPresent() {
-			assertEquals(Optional.empty(), xml.attribute(UNKNOWN));
-		}
-	}
-
-	@Nested
-	class HandlerTests {
-		private Consumer<String> consumer;
-
-		@SuppressWarnings("unchecked")
-		@BeforeEach
-		void before() {
-			consumer = mock(Consumer.class);
-		}
-
-		@DisplayName("Create a handler that delegates to the children of the element")
-		@Test
-		void children() {
-			final Element parent = new Element.Builder().child(xml).build();
-			final Handler handler = spy(Handler.class);
-			final Handler children = handler.children();
-			assertNotNull(children);
-			children.accept(parent);
-			verify(handler).accept(xml);
-		}
-
-		@DisplayName("Create a handler for a given element transformer")
-		@Test
-		void transformer() {
-			final Handler handler = Handler.of((Element e) -> e.text(), consumer);
-			handler.accept(xml);
-			verify(consumer).accept(TEXT);
-		}
-
-		@DisplayName("Create a handler that first applies a converter to the element text")
-		@Test
-		void converter() {
-			final Handler handler = Handler.of(Converter.STRING, consumer);
-			handler.accept(xml);
-			verify(consumer).accept(TEXT);
-		}
-
-		@DisplayName("Create a handler for the element text")
-		@Test
-		void text() {
-			final Handler handler = Handler.of(consumer);
-			handler.accept(xml);
-			verify(consumer).accept(TEXT);
-		}
-
-		@Nested
-		class IndexHandlerTests {
-			private Handler handler;
-
-			@BeforeEach
-			void before() {
-				handler = mock(Handler.class);
-			}
-
-			@DisplayName("Delegate an element to a handler by name")
-			@Test
-			void index() {
-				final Index index = new Index(XML -> handler, null);
-				index.accept(xml);
-				verify(handler).accept(xml);
-			}
-
-			@DisplayName("Delegate an element to the defalt handler if no explicit mapping is configured")
-			@Test
-			void def() {
-				final Index index = new Index(whatever -> null, handler);
-				index.accept(xml);
-				verify(handler).accept(xml);
-			}
-
-			@DisplayName("Fail for an element with no mapping")
-			@Test
-			void fail() {
-				final Index index = new Index(whatever -> null, null);
-				assertThrows(ElementException.class, () -> index.accept(xml));
-			}
-		}
-	}
-
-	@Nested
-	class ExceptionTests {
-		private static final String MESSAGE = "message";
-
-		@Test
-		void constructor() {
-			final var cause = new IllegalArgumentException();
-			final ElementException e = xml.new ElementException(MESSAGE, cause);
-			assertEquals(xml, e.element());
-			assertEquals("message at /xml", e.getMessage());
-			assertEquals(cause, e.getCause());
-		}
-
-		@DisplayName("An element can throw an exception with itself as the cause")
-		@Test
-		void helper() {
-			assertEquals(xml.new ElementException(MESSAGE).getMessage(), xml.exception(MESSAGE).getMessage());
-		}
-
-		@DisplayName("An element exception should contain the path to the offending element")
-		@Test
-		void child() {
-			final Element child = Element.of(CHILD);
-			new Element.Builder().name("parent").child(child).build();
-			assertEquals("message at /parent/child", child.exception(MESSAGE).getMessage());
-		}
-	}
-
-	@Nested
-	class BuilderTests {
+	class Child {
+		private Element parent;
 		private Element child;
 
 		@BeforeEach
 		void before() {
-			child = Element.of(CHILD);
+			child = Element.of("child");
+			parent = new Element.Builder().name("parent").child(child).build();
 		}
 
-		@DisplayName("Build a simple element")
+		@DisplayName("has a parent element")
 		@Test
-		void build() {
-			final Element result = new Element.Builder().build();
-			assertNotNull(result);
-			assertEquals(XML, result.name());
-			assertEquals(null, result.text());
-			assertEquals(Map.of(), result.attributes());
-			assertEquals(result, Element.of(XML));
-		}
-
-		@DisplayName("Build an element with an existing child")
-		@Test
-		void childExisting() {
-			final Element parent = new Element.Builder().child(child).build();
+		void parent() {
 			assertEquals(Optional.of(parent), child.parent());
-			assertArrayEquals(new Element[]{child}, parent.children().toArray());
-			assertEquals(1, parent.count());
-			assertEquals(0, child.count());
 		}
 
-		@DisplayName("Build a child element")
+		@DisplayName("is a child of the parent element")
 		@Test
-		void child() {
-			final Element parent = new Element.Builder()
-					.child()
-						.name(CHILD)
-						.end()
-					.build();
-			child = parent.child(CHILD);
-			assertEquals(Optional.of(parent), child.parent());
-			assertArrayEquals(new Element[]{child}, parent.children().toArray());
-			assertEquals(1, parent.count());
-			assertEquals(0, child.count());
+		void children() {
+			assertEquals(1, parent.size());
+			assertEquals(List.of(child), parent.children().toList());
+			assertEquals(Optional.of(child), parent.child("child"));
+			assertEquals(child, parent.first("child"));
 		}
 
-		@DisplayName("Cannot build an element with an incomplete child")
+		@DisplayName("has a path starting at the root element")
 		@Test
-		void buildChildNotCompleted() {
-			assertThrows(IllegalStateException.class, () -> new Element.Builder().child().build());
+		void path() {
+			assertEquals(List.of(parent, child), child.path());
 		}
 
-		@DisplayName("Cannot end a builder that is not constructing a child element")
+		@DisplayName("can raise an exception containing the path to its parent")
 		@Test
-		void endChildNotStarted() {
-			assertThrows(IllegalStateException.class, () -> new Element.Builder().end());
+		void exception() {
+			final var e = child.exception("doh");
+			assertEquals("doh at /parent/child", e.getMessage());
 		}
 
-		@DisplayName("Cannot add an existing child that already has a parent")
+		@DisplayName("can be mandatory")
 		@Test
-		void childAlreadyParent() {
-			new Element.Builder().child(child).build();
-			assertThrows(IllegalStateException.class, () -> new Element.Builder().child(child));
+		void first() {
+			assertThrows(ElementException.class, () -> parent.first("whatever"));
 		}
 	}
 
+	@DisplayName("A sibling element...")
 	@Nested
-	class LoaderTests {
-		private Element.Loader loader;
+	class Sibling {
+		private Element parent;
+		private Element one, two;
+		private Element other;
 
 		@BeforeEach
 		void before() {
-			loader = new Element.Loader();
+			one = Element.of("child");
+			two = Element.of("child");
+			other = Element.of("other");
+			parent = new Element.Builder().name("parent").child(one).child(two).child(other).build();
 		}
 
+		@DisplayName("has an index indicating its position relative to its siblings")
 		@Test
-		void load() throws IOException {
-			// Create XML
-			final String xml =
-					"""
-					<parent one="1" two="2">
-						<child>
-							text
-						</child>
+		void index() {
+			assertEquals(1, one.index());
+			assertEquals(2, two.index());
+		}
 
-						<sibling>
-							<other />
-						</sibling>
-					</parent>
-					""";
+		@DisplayName("can be selected from its parent by name")
+		@Test
+		void children() {
+			assertEquals(List.of(one, two), parent.children("child").toList());
+			assertEquals(List.of(other), parent.children("other").toList());
+		}
 
-			// Load XML
-			final Element root = loader.load(new StringReader(xml));
-			assertNotNull(root);
+		@DisplayName("can be retrieved by name as the first sibling")
+		@Test
+		void child() {
+			assertEquals(Optional.of(one), parent.child("child"));
+		}
 
-			// Check parent element
-			assertEquals("parent", root.name());
-			assertEquals(2, root.count());
-			assertEquals(Map.of("one", "1", "two", "2"), root.attributes());
+		@DisplayName("can raise an exception containing its sibling index")
+		@Test
+		void exception() {
+			final var e = two.new ElementException("doh");
+			assertEquals("doh at /parent/child[2]", e.getMessage());
+		}
+	}
 
-			// Check children
-			final var children = root.children().collect(toList());
-			assertEquals(2, children.size());
-			assertEquals(1, root.children("child").count());
-			assertEquals(1, root.children("sibling").count());
+	@DisplayName("The builder for an element...")
+	@Nested
+	class BuilderTests {
+		private Element.Builder builder;
 
-			// Check child
-			final Element child = children.get(0);
-			assertEquals(CHILD, child.name());
-			assertEquals(TEXT, child.text().toString());
-			assertEquals(0, child.children().count());
+		@BeforeEach
+		void before() {
+			builder = new Element.Builder();
+		}
 
-			// Check nested child
-			assertEquals(1, children.get(1).children().count());
+		@DisplayName("can construct a simple element")
+		@Test
+		void build() {
+			final Element element = builder
+					.name("name")
+					.attribute("key", "value")
+					.text("text")
+					.build();
+
+			final Element expected = new Element("name", Map.of("key", "value"), "text");
+			assertEquals(expected, element);
+		}
+
+		@DisplayName("can attach an existing element as a child")
+		@Test
+		void child() {
+			final Element child = Element.of("child");
+
+			final Element parent = builder
+					.name("parent")
+					.child(child)
+					.build();
+
+			assertEquals(Optional.of(parent), child.parent());
+			assertEquals(List.of(child), parent.children().toList());
+		}
+
+		@DisplayName("can attach an element with text content")
+		@Test
+		void text() {
+			final Element parent = builder
+					.name("parent")
+					.child("child", "text")
+					.build();
+
+			final Element expected = new Element.Builder().name("child").text("text").build();
+			assertEquals(List.of(expected), parent.children().toList());
+		}
+
+		@DisplayName("can construct child elements")
+		@Test
+		void children() {
+			final Element parent = builder
+					.name("parent")
+					.child()
+						.name("child")
+						.end()
+					.child()
+						.name("child")
+						.end()
+					.build();
+
+			final Element child = Element.of("child");
+			assertEquals(2, parent.size());
+			assertEquals(List.of(child, child), parent.children().toList());
+			assertEquals(List.of(child, child), parent.children("child").toList());
+
+			final Element actual = parent.children().iterator().next();
+			assertEquals(Optional.of(parent), actual.parent());
+		}
+
+		@DisplayName("cannot complete construction if a child builder has not been ended")
+		@Test
+		void invalid() {
+			assertThrows(IllegalStateException.class, () -> builder.child().build());
+		}
+
+		@DisplayName("cannot complete a child element that has not been started")
+		@Test
+		void end() {
+			assertThrows(IllegalStateException.class, () -> builder.end());
 		}
 	}
 }

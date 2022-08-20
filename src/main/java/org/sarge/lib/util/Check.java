@@ -1,7 +1,6 @@
 package org.sarge.lib.util;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Utility class providing various parameter validation methods.
@@ -136,7 +135,7 @@ public final class Check {
     public static <T extends Number> T range(T num, T min, T max) {
     	final float f = num.floatValue();
         if((f < min.floatValue()) || (f > max.floatValue())) {
-            throw new IllegalArgumentException(String.format("Value of out range: actual=%d expected=(%s...%d)", num, min, max));
+            throw new IllegalArgumentException(String.format("Value of out range: actual=%s expected=(%s...%s)", num, min, max));
         }
         return num;
     }
