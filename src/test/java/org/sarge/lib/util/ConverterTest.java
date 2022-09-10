@@ -2,6 +2,7 @@ package org.sarge.lib.util;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.Duration;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -33,5 +34,15 @@ class ConverterTest {
 		final var converter = Converter.of(Map.of("everything", 42), Integer::parseInt);
 		assertEquals(42, converter.apply("everything"));
 		assertEquals(42, converter.apply("42"));
+	}
+
+	@Test
+	void duration() {
+		assertEquals(Duration.ofSeconds(1), Converter.DURATION.apply("PT1S"));
+		assertEquals(Duration.ofMillis(2), Converter.DURATION.apply("2ms"));
+		assertEquals(Duration.ofSeconds(3), Converter.DURATION.apply("3s"));
+		assertEquals(Duration.ofMinutes(4), Converter.DURATION.apply("4m"));
+		assertEquals(Duration.ofHours(5), Converter.DURATION.apply("5h"));
+		assertEquals(Duration.ofDays(6), Converter.DURATION.apply("6d"));
 	}
 }

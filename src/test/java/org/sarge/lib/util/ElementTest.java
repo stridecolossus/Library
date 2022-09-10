@@ -3,9 +3,10 @@ package org.sarge.lib.util;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
+import java.util.function.Function;
 
 import org.junit.jupiter.api.*;
-import org.sarge.lib.util.Element.ElementException;
+import org.sarge.lib.util.Element.*;
 
 public class ElementTest {
 	@DisplayName("A simple element...")
@@ -35,7 +36,9 @@ public class ElementTest {
 		@DisplayName("has empty text content")
 		@Test
 		void text() {
-			assertEquals("", element.text());
+			final Content content = element.text();
+			assertNotNull(content);
+			assertEquals(false, content.isPresent());
 		}
 
 		@DisplayName("has an implicit index of one")
@@ -64,7 +67,7 @@ public class ElementTest {
 			assertNotNull(element.children());
 			assertEquals(List.of(), element.children().toList());
 			assertEquals(List.of(), element.children("whatever").toList());
-			assertEquals(Optional.empty(), element.child("whatever"));
+			assertEquals(Optional.empty(), element.optional("whatever"));
 		}
 
 		@DisplayName("can be mapped by a transform function")
@@ -81,6 +84,63 @@ public class ElementTest {
 		}
 	}
 
+	@Nested
+	class ContentTests {
+		private Element element;
+
+		@BeforeEach
+		void before() {
+			element = Element.of("name");
+		}
+
+		private Content content(String value) {
+			return element.new Content(value) {
+				@Override
+				protected String message() {
+					return "message";
+				}
+			};
+		}
+
+		@Test
+		void isPresent() {
+			final Content content = content("value");
+			assertEquals(true, content.isPresent());
+		}
+
+		@Test
+		void transform() {
+			final Content content = content("value");
+			assertEquals("value", content.transform(Function.identity()));
+			assertEquals("value", content.toString());
+		}
+
+		@Test
+		void toInteger() {
+			final Content content = content("3");
+			assertEquals(3, content.toInteger());
+		}
+
+		@Test
+		void toFloat() {
+			final Content content = content("0.5");
+			assertEquals(0.5f, content.toFloat());
+		}
+
+		@Test
+		void toBoolean() {
+			final Content content = content("true");
+			assertEquals(true, content.toBoolean());
+		}
+
+		@Test
+		void empty() {
+			final Content content = content(null);
+			assertEquals(false, content.isPresent());
+			assertThrows(ElementException.class, () -> content.toString());
+		}
+	}
+
 	@DisplayName("An element attribute...")
 	@Nested
 	class Attributes {
@@ -88,35 +148,44 @@ public class ElementTest {
 
 		@BeforeEach
 		void before() {
-			element = new Element("name", Map.of("key", "value"), "");
+			element = new Element("name", Map.of("key", "value"), null);
 		}
 
 		@DisplayName("can be queried from the element")
 		@Test
 		void attributes() {
 			assertEquals(Map.of("key", "value"), element.attributes());
-			assertEquals(Optional.of("value"), element.optional("key"));
-			assertEquals("value", element.attribute("key"));
+			assertNotNull(element.attribute("key"));
 		}
 
 		@DisplayName("can be optional")
 		@Test
 		void optional() {
-			assertEquals(Optional.empty(), element.optional("whatever"));
-		}
-
-		@DisplayName("can be mandatory")
-		@Test
-		void mandatory() {
-			assertThrows(ElementException.class, () -> element.attribute("whatever"));
+			final Content attr = element.attribute("whatever");
+			assertNotNull(attr);
+			assertEquals(false, attr.isPresent());
 		}
 	}
 
-	@DisplayName("An element can contain text content")
-	@Test
-	void text() {
-		final Element element = new Element("name", Map.of(), "text");
-		assertEquals("text", element.text());
+	@Nested
+	class TextContentTests {
+		@DisplayName("An element can contain text content")
+		@Test
+		void text() {
+			final Element element = new Element("name", Map.of(), "text");
+			final Content content = element.text();
+			assertNotNull(content);
+			assertEquals("text", content.toString());
+		}
+
+		@DisplayName("An element with no text cannot be queried")
+		@Test
+		void empty() {
+			final Element element = new Element("name", Map.of(), null);
+			final Content content = element.text();
+			assertNotNull(content);
+			assertThrows(ElementException.class, () -> content.toString());
+		}
 	}
 
 	@Test
@@ -151,8 +220,7 @@ public class ElementTest {
 		void children() {
 			assertEquals(1, parent.size());
 			assertEquals(List.of(child), parent.children().toList());
-			assertEquals(Optional.of(child), parent.child("child"));
-			assertEquals(child, parent.first("child"));
+			assertEquals(child, parent.child("child"));
 		}
 
 		@DisplayName("has a path starting at the root element")
@@ -168,10 +236,10 @@ public class ElementTest {
 			assertEquals("doh at /parent/child", e.getMessage());
 		}
 
-		@DisplayName("can be mandatory")
+		@DisplayName("is mandatory")
 		@Test
-		void first() {
-			assertThrows(ElementException.class, () -> parent.first("whatever"));
+		void child() {
+			assertThrows(ElementException.class, () -> parent.child("whatever"));
 		}
 	}
 
@@ -207,7 +275,7 @@ public class ElementTest {
 		@DisplayName("can be retrieved by name as the first sibling")
 		@Test
 		void child() {
-			assertEquals(Optional.of(one), parent.child("child"));
+			assertEquals(one, parent.child("child"));
 		}
 
 		@DisplayName("can raise an exception containing its sibling index")

@@ -64,7 +64,7 @@ public final class Element {
 	public Element(String name, Map<String, String> attributes, String text) {
 		this.name = notEmpty(name);
 		this.attributes = Map.copyOf(attributes);
-		this.text = text == null ? "" : text; // TODO
+		this.text = text;
 	}
 
 	/**
@@ -100,31 +100,110 @@ public final class Element {
 	}
 
 	/**
-	 * Retrieves an optional attribute.
-	 * @param name Attribute name
-	 * @return Attribute value
+	 * A <i>content</i> instance represents an attribute or the text content of this element.
 	 */
-	public Optional<String> optional(String name) {
-		return Optional.ofNullable(attributes.get(name));
+	public abstract class Content {
+		private final String value;
+
+		protected Content(String value) {
+			this.value = value;
+		}
+
+		/**
+		 * @return Whether this content is present
+		 */
+		public boolean isPresent() {
+			return value != null;
+		}
+
+		/**
+		 * @throws ElementException if this content is not present
+		 */
+		private void check() {
+			if(value == null) throw exception(message());
+		}
+
+		/**
+		 * @return Exception message when accessing empty content
+		 */
+		protected abstract String message();
+
+		/**
+		 * Transforms this content.
+		 * @param <R> Return type
+		 * @param transform Transformation function
+		 * @return Result
+		 * @throws ElementException if the transform cannot be applied to this content
+		 */
+		public <R> R transform(Function<String, R> transform) {
+			check();
+			try {
+				return transform.apply(value);
+			}
+			catch(NumberFormatException e) {
+				throw exception(e.getMessage());
+			}
+		}
+
+		/**
+		 * Converts this content to an integer.
+		 * @return Integer
+		 * @throws ElementException if this content is not a valid integer
+		 */
+		public int toInteger() {
+			return transform(Integer::parseInt);
+		}
+
+		/**
+		 * Converts this content to a floating-point number.
+		 * @return Float
+		 * @throws ElementException if this content is not a valid floating-point value
+		 */
+		public float toFloat() {
+			return transform(Float::parseFloat);
+		}
+
+		/**
+		 * Converts this content to a boolean value.
+		 * @return Boolean
+		 * @throws ElementException if this content is not a valid boolean
+		 * @see Converter#BOOLEAN
+		 */
+		public boolean toBoolean() {
+			return transform(Converter.BOOLEAN::apply);
+		}
+
+		@Override
+		public String toString() {
+			check();
+			return value;
+		}
 	}
 
 	/**
-	 * Retrieves a mandatory attribute.
+	 * Retrieves an attribute.
 	 * @param name Attribute name
-	 * @return Attribute value
-	 * @throws ElementException if the attribute is not present
+	 * @return Attribute
 	 */
-	public String attribute(String name) {
-		final String attr = attributes.get(name);
-		if(attr == null) throw new ElementException("Expected attribute: " + name);
-		return attr;
+	public Content attribute(String name) {
+		return new Content(attributes.get(name)) {
+			@Override
+			protected String message() {
+				return String.format("Attribute %s not present", name);
+			}
+		};
 	}
 
 	/**
-	 * @return Text content or the empty string if none
+	 * @return Text content
 	 */
-	public String text() {
-		return text;
+	public Content text() {
+		return new Content(text) {
+			@Override
+			protected String message() {
+				return "Text not present";
+			}
+		};
 	}
 
 	/**
@@ -158,45 +237,32 @@ public final class Element {
 	}
 
 	/**
-	 * Optionally retrieves the <b>first</b> child element.
-	 * @return Child element
-	 */
-	public Optional<Element> child() {
-		if(children.isEmpty()) {
-			return Optional.empty();
-		}
-		else {
-			return Optional.of(children.get(0));
-		}
-	}
-
-	/**
-	 * Optionally retrieves the <b>first</b> child element with the given name.
+	 * Retrieves the <i>first</i> child of this element with the given name.
 	 * @param name Child element name
 	 * @return Child element
+	 * @throws ElementException if the element does not exist
 	 */
-	public Optional<Element> child(String name) {
-		return children(name).findFirst();
+	public Element child(String name) {
+		return optional(name).orElseThrow(() -> exception("Expected child element: " + name));
 	}
 
 	/**
-	 * Retrieves the <b>first</b> child element with the given name.
-	 * @param name Child element name
+	 * Retrieves the <i>first</i> child of this element.
 	 * @return Child element
-	 * @throws ElementException if the child is not present
+	 * @throws ElementException if this element does not have a child
 	 */
-	public Element first(String name) {
-		return child(name).orElseThrow(() -> new ElementException("Expected child element: " + name));
-	}
-
-	/**
-	 * Retrieves the <b>first</b> child element.
-	 * @return Child element
-	 * @throws ElementException if a child is not present
-	 */
-	public Element first() {
-		if(children.isEmpty()) throw new ElementException("Expected a child element");
+	public Element child() {
+		if(children.isEmpty()) throw exception("Expected child element");
 		return children.get(0);
+	}
+
+	/**
+	 * Optionally retrieves the <i>first</i> child of this element with the given name.
+	 * @param name Child element name
+	 * @return Child element
+	 */
+	public Optional<Element> optional(String name) {
+		return children(name).findAny();
 	}
 
 	/**

@@ -2,7 +2,9 @@ package org.sarge.lib.util;
 
 import static java.util.stream.Collectors.toMap;
 
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -88,4 +90,44 @@ public interface Converter<T> extends Function<String, T> {
 			}
 		};
 	}
+
+	/**
+	 * Converter for a duration.
+	 * <p>
+	 * This implementation supports the standard ISO {@link Duration#parse(CharSequence)} or a custom format specified by a duration and a time unit, e.g. {@code 10s} for 10 seconds.
+	 * <p>
+	 * The following time units are supported:
+	 * <ul>
+	 * <li>ms - Milliseconds</li>
+	 * <li>s - Seconds</li>
+	 * <li>m - Minutes</li>
+	 * <li>h - Hours</li>
+	 * <li>d - days</li>
+	 * </ul>
+	 */
+	Converter<Duration> DURATION = str -> {
+		if(str.startsWith("P")) {
+			// Delegate to ISO format
+			return Duration.parse(str);
+		}
+		else
+		if(str.endsWith("ms")) {
+			// Parse milliseconds
+			final String ms = str.substring(0, str.length() - 2);
+			return Duration.ofMillis(Long.parseLong(ms));
+		}
+		else {
+			// Parse custom duration format
+			final int end = str.length() - 1;
+			final int num = Integer.parseInt(str.substring(0, end));
+			final TimeUnit unit = switch(str.charAt(end)) {
+				case 's' -> TimeUnit.SECONDS;
+				case 'm' -> TimeUnit.MINUTES;
+				case 'h' -> TimeUnit.HOURS;
+				case 'd' -> TimeUnit.DAYS;
+				default -> throw new NumberFormatException("Unsupported duration unit: " + str);
+			};
+			return Duration.of(num, unit.toChronoUnit());
+		}
+	};
 }
