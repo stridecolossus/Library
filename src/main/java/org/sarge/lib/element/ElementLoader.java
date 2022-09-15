@@ -1,10 +1,10 @@
-package org.sarge.lib.util;
+package org.sarge.lib.element;
 
 import java.io.*;
 
 import javax.xml.parsers.*;
 
-import org.sarge.lib.util.Element.Builder;
+import org.sarge.lib.element.Element.Builder;
 import org.w3c.dom.*;
 import org.xml.sax.*;
 

@@ -1,4 +1,4 @@
-package org.sarge.lib.util;
+package org.sarge.lib.element;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.*;
-import org.sarge.lib.util.Element.*;
+import org.sarge.lib.element.Element.*;
 
 public class ElementTest {
 	@DisplayName("A simple element...")
@@ -16,7 +16,7 @@ public class ElementTest {
 
 		@BeforeEach
 		void before() {
-			element = Element.of("name");
+			element = new Element("name");
 		}
 
 		@DisplayName("can be constructed")
@@ -90,7 +90,7 @@ public class ElementTest {
 
 		@BeforeEach
 		void before() {
-			element = Element.of("name");
+			element = new Element("name");
 		}
 
 		private Content content(String value) {
@@ -172,7 +172,7 @@ public class ElementTest {
 		@DisplayName("An element can contain text content")
 		@Test
 		void text() {
-			final Element element = new Element("name", Map.of(), "text");
+			final Element element = new Element("name", "text");
 			final Content content = element.text();
 			assertNotNull(content);
 			assertEquals("text", content.toString());
@@ -181,7 +181,7 @@ public class ElementTest {
 		@DisplayName("An element with no text cannot be queried")
 		@Test
 		void empty() {
-			final Element element = new Element("name", Map.of(), null);
+			final Element element = new Element("name");
 			final Content content = element.text();
 			assertNotNull(content);
 			assertThrows(ElementException.class, () -> content.toString());
@@ -194,7 +194,7 @@ public class ElementTest {
 		assertEquals(element, element);
 		assertEquals(element, new Element("name", Map.of("key", "value"), "text"));
 		assertNotEquals(element, null);
-		assertNotEquals(element, Element.of("whatever"));
+		assertNotEquals(element, new Element("whatever"));
 	}
 
 	@DisplayName("A single child element...")
@@ -205,7 +205,7 @@ public class ElementTest {
 
 		@BeforeEach
 		void before() {
-			child = Element.of("child");
+			child = new Element("child");
 			parent = new Element.Builder().name("parent").child(child).build();
 		}
 
@@ -252,9 +252,9 @@ public class ElementTest {
 
 		@BeforeEach
 		void before() {
-			one = Element.of("child");
-			two = Element.of("child");
-			other = Element.of("other");
+			one = new Element("child");
+			two = new Element("child");
+			other = new Element("other");
 			parent = new Element.Builder().name("parent").child(one).child(two).child(other).build();
 		}
 
@@ -312,7 +312,7 @@ public class ElementTest {
 		@DisplayName("can attach an existing element as a child")
 		@Test
 		void child() {
-			final Element child = Element.of("child");
+			final Element child = new Element("child");
 
 			final Element parent = builder
 					.name("parent")
@@ -348,7 +348,7 @@ public class ElementTest {
 						.end()
 					.build();
 
-			final Element child = Element.of("child");
+			final Element child = new Element("child");
 			assertEquals(2, parent.size());
 			assertEquals(List.of(child, child), parent.children().toList());
 			assertEquals(List.of(child, child), parent.children("child").toList());

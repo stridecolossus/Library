@@ -1,4 +1,4 @@
-package org.sarge.lib.util;
+package org.sarge.lib.element;
 
 import static java.util.stream.Collectors.*;
 import static org.sarge.lib.util.Check.*;
@@ -6,6 +6,8 @@ import static org.sarge.lib.util.Check.*;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import org.sarge.lib.util.*;
 
 /**
  * An <i>element</i> is a node tree used to represent compound document types such as XML and YAML.
@@ -40,15 +42,6 @@ import java.util.stream.Stream;
  * @author Sarge
  */
 public final class Element {
-	/**
-	 * Creates a root element with the given name.
-	 * @param name Root element name
-	 * @return Root element
-	 */
-	public static Element of(String name) {
-		return new Element.Builder().name(name).build();
-	}
-
 	private final String name;
 	private final Map<String, String> attributes;
 	private final String text;
@@ -65,6 +58,23 @@ public final class Element {
 		this.name = notEmpty(name);
 		this.attributes = Map.copyOf(attributes);
 		this.text = text;
+	}
+
+	/**
+	 * Constructor for an element with text content.
+	 * @param name			Element name
+	 * @param text			Text content
+	 */
+	public Element(String name, String text) {
+		this(name, Map.of(), text);
+	}
+
+	/**
+	 * Constructor for a simple element.
+	 * @param name Element name
+	 */
+	public Element(String name) {
+		this(name, null);
 	}
 
 	/**
@@ -366,6 +376,14 @@ public final class Element {
 		 */
 		public ElementException(String message) {
 			super(message);
+		}
+
+		/**
+		 * Constructor.
+		 * @param cause Cause
+		 */
+		public ElementException(Throwable cause) {
+			super(cause);
 		}
 
 		@Override

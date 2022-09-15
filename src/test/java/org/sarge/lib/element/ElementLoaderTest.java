@@ -1,4 +1,4 @@
-package org.sarge.lib.util;
+package org.sarge.lib.element;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -6,6 +6,7 @@ import java.io.*;
 import java.util.*;
 
 import org.junit.jupiter.api.*;
+import org.sarge.lib.element.Element.Content;
 
 public class ElementLoaderTest {
 	private ElementLoader loader;
@@ -40,7 +41,11 @@ public class ElementLoaderTest {
 		assertNotNull(child);
 		assertEquals("child", child.name());
 		assertEquals(Optional.of(root), child.parent());
-		assertEquals("text", child.text());
 		assertEquals(0, child.children().count());
+
+		// Check text
+		final Content text = child.text();
+		assertNotNull(text);
+		assertEquals("text", text.toString());
 	}
 }
