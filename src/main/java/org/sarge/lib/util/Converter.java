@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
- * A <i>converter</i>
- * @param <T> Converted data-type
+ * A <i>converter</i> is a convenience adapter for a parsing function.
+ * @param <T> Result type
  * @author Sarge
  */
 @FunctionalInterface
@@ -24,20 +24,17 @@ public interface Converter<T> extends Function<String, T> {
 	T apply(String str) throws NumberFormatException;
 
 	/**
-	 * Identity converter.
-	 */
-	Converter<String> IDENTITY = str -> str;
-
-	/**
-	 * Converts to a boolean.
+	 * Parses a case insensitive boolean value.
+	 * @param str Boolean string
+	 * @return Parsed boolean
 	 */
 	Converter<Boolean> BOOLEAN = str -> {
 		if(str.equalsIgnoreCase("true")) {
-			return true;
+			return Boolean.TRUE;
 		}
 		else
 		if(str.equalsIgnoreCase("false")) {
-			return false;
+			return Boolean.FALSE;
 		}
 		else {
 			throw new NumberFormatException("Invalid boolean: " + str);
@@ -69,6 +66,7 @@ public interface Converter<T> extends Function<String, T> {
 	private static String constant(Enum<?> e) {
 		return e.name().toLowerCase().replaceAll("_", "-");
 	}
+	// TODO - this is a bit specific? add as a optional argument to converter?
 
 	/**
 	 * Creates an adapter for a converter that first attempts to lookup a value from the given table.
@@ -92,7 +90,7 @@ public interface Converter<T> extends Function<String, T> {
 	}
 
 	/**
-	 * Converter for a duration.
+	 * Parses a duration.
 	 * <p>
 	 * This implementation supports the standard ISO {@link Duration#parse(CharSequence)} or a custom format specified by a duration and a time unit, e.g. {@code 10s} for 10 seconds.
 	 * <p>
@@ -110,24 +108,25 @@ public interface Converter<T> extends Function<String, T> {
 			// Delegate to ISO format
 			return Duration.parse(str);
 		}
-		else
-		if(str.endsWith("ms")) {
-			// Parse milliseconds
-			final String ms = str.substring(0, str.length() - 2);
-			return Duration.ofMillis(Long.parseLong(ms));
-		}
 		else {
-			// Parse custom duration format
-			final int end = str.length() - 1;
-			final int num = Integer.parseInt(str.substring(0, end));
-			final TimeUnit unit = switch(str.charAt(end)) {
-				case 's' -> TimeUnit.SECONDS;
-				case 'm' -> TimeUnit.MINUTES;
-				case 'h' -> TimeUnit.HOURS;
-				case 'd' -> TimeUnit.DAYS;
-				default -> throw new NumberFormatException("Unsupported duration unit: " + str);
-			};
-			return Duration.of(num, unit.toChronoUnit());
+			if(str.endsWith("ms")) {
+				// Parse milliseconds
+				final String ms = str.substring(0, str.length() - 2);
+				return Duration.ofMillis(Long.parseLong(ms));
+			}
+			else {
+				// Parse custom duration format
+				final int end = str.length() - 1;
+				final int num = Integer.parseInt(str.substring(0, end));
+				final TimeUnit unit = switch(str.charAt(end)) {
+					case 's' -> TimeUnit.SECONDS;
+					case 'm' -> TimeUnit.MINUTES;
+					case 'h' -> TimeUnit.HOURS;
+					case 'd' -> TimeUnit.DAYS;
+					default -> throw new NumberFormatException("Unsupported duration unit: " + str);
+				};
+				return Duration.of(num, unit.toChronoUnit());
+			}
 		}
 	};
 }

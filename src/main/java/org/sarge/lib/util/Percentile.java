@@ -14,7 +14,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	/**
 	 * Zero percentile.
 	 */
-	public static final Percentile ZERO = new Percentile(0);
+	public static final Percentile ZERO = new Percentile(0f);
 
 	/**
 	 * 50% percentile.
@@ -24,14 +24,16 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	/**
 	 * 100% percentile.
 	 */
-	public static final Percentile ONE = new Percentile(1);
+	public static final Percentile ONE = new Percentile(1f);
 
 	private static final Percentile[] INTEGERS = new Percentile[MAX + 1];
 
 	static {
-		for(int n = 0; n <= MAX; ++n) {
+		INTEGERS[0] = ZERO;
+		for(int n = 1; n < MAX; ++n) {
 			INTEGERS[n] = new Percentile(n / (float) MAX);
 		}
+		INTEGERS[MAX] = ONE;
 	}
 
 	/**
@@ -61,13 +63,14 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	 * <p>
 	 * @param str Percentile as a string
 	 * @return Percentile
+	 * @throws ArrayIndexOutOfBoundsException if the given value is not a valid percentile
 	 */
 	public static Percentile parse(String str) {
 		if(str.indexOf('.') >= 0) {
 			return new Percentile(Float.parseFloat(str));
 		}
 		else {
-			return Percentile.of(Integer.parseInt(str));
+			return of(Integer.parseInt(str));
 		}
 	}
 
@@ -85,7 +88,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	 * @return Whether this percentile is equal to zero
 	 */
 	public boolean isZero() {
-		return Float.floatToIntBits(value) == 0;
+		return (this == ZERO) || Float.floatToIntBits(value) == 0;
 	}
 
 	@Override
@@ -131,7 +134,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	}
 
 	/**
-	 * Determines the minimum percentile.
+	 * Determines the minimum of two percentiles.
 	 * @param that Percentile
 	 * @return Minimum percentile
 	 */
@@ -145,7 +148,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	}
 
 	/**
-	 * Determines the maximum percentile.
+	 * Determines the maximum of two percentiles.
 	 * @param that Percentile
 	 * @return Maximum percentile
 	 */
@@ -165,7 +168,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 	 */
 	public Percentile multiply(Percentile p) {
 		if(isZero() || p.isZero()) {
-			return Percentile.ZERO;
+			return ZERO;
 		}
 		else {
 			return new Percentile(this.value * p.value);
@@ -190,7 +193,7 @@ public final class Percentile extends Number implements Comparable<Percentile> {
 		return
 				(obj == this) ||
 				(obj instanceof Percentile that) &&
-				(Float.floatToIntBits(value) == Float.floatToIntBits(that.value));
+				(this.hashCode() == that.hashCode());
 	}
 
 	@Override
